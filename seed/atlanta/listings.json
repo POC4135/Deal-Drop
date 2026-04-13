@@ -1,0 +1,38 @@
+[
+  {
+    "id": "taqueria-del-sol",
+    "venueName": "Taqueria del Sol",
+    "category": "cheap-eats",
+    "neighborhood": "West Midtown",
+    "distanceMiles": 0.3,
+    "rating": 4.7,
+    "trustLabel": "Founder verified",
+    "freshnessText": "Updated 42 mins ago",
+    "latitude": 33.7867,
+    "longitude": -84.4112
+  },
+  {
+    "id": "sakura-ramen-house",
+    "venueName": "Sakura Ramen House",
+    "category": "live-now",
+    "neighborhood": "Midtown",
+    "distanceMiles": 0.8,
+    "rating": 4.9,
+    "trustLabel": "User confirmed",
+    "freshnessText": "3 recent confirmations",
+    "latitude": 33.7815,
+    "longitude": -84.3873
+  },
+  {
+    "id": "bella-napoli",
+    "venueName": "Bella Napoli",
+    "category": "tonight",
+    "neighborhood": "Ponce",
+    "distanceMiles": 1.2,
+    "rating": 4.5,
+    "trustLabel": "Needs recheck",
+    "freshnessText": "Last verified yesterday",
+    "latitude": 33.7721,
+    "longitude": -84.3632
+  }
+]

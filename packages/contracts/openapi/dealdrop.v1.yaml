@@ -1,0 +1,107 @@
+openapi: 3.1.0
+info:
+  title: DealDrop API
+  version: 1.0.0
+  description: |
+    Contract-first foundation for the DealDrop mobile app, admin portal, and
+    async worker pipelines.
+servers:
+  - url: https://api.dealdrop.app
+paths:
+  /v1/discovery/feed:
+    get:
+      summary: Return nearby curated deal cards for the primary feed.
+      parameters:
+        - in: query
+          name: city
+          schema:
+            type: string
+        - in: query
+          name: latitude
+          schema:
+            type: number
+        - in: query
+          name: longitude
+          schema:
+            type: number
+        - in: query
+          name: filter
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Feed response
+  /v1/discovery/map:
+    get:
+      summary: Return clustered map results for a bounding box and zoom level.
+      parameters:
+        - in: query
+          name: bbox
+          schema:
+            type: string
+        - in: query
+          name: zoom
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Map cluster response
+  /v1/search/suggestions:
+    get:
+      summary: Return search suggestions across venue, cuisine, area, and tags.
+      responses:
+        '200':
+          description: Suggestion response
+  /v1/listings/{listingId}:
+    get:
+      summary: Return the listing detail read model.
+      parameters:
+        - in: path
+          name: listingId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Listing detail response
+  /v1/saved:
+    post:
+      summary: Save a listing for the active user.
+      responses:
+        '204':
+          description: Saved
+    delete:
+      summary: Remove a saved listing for the active user.
+      responses:
+        '204':
+          description: Unsaved
+  /v1/contributions:
+    post:
+      summary: Submit a moderated contribution payload.
+      responses:
+        '202':
+          description: Contribution accepted for review
+  /v1/listings/{listingId}/confirm:
+    post:
+      summary: Submit a validity confirmation event for a listing.
+      responses:
+        '202':
+          description: Confirmation accepted
+  /v1/listings/{listingId}/report:
+    post:
+      summary: Submit an issue report for a listing.
+      responses:
+        '202':
+          description: Report accepted
+  /v1/me/karma:
+    get:
+      summary: Return the current user karma summary.
+      responses:
+        '200':
+          description: Karma response
+  /v1/me/profile:
+    get:
+      summary: Return the current user profile summary.
+      responses:
+        '200':
+          description: Profile response
