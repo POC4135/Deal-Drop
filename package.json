@@ -1,0 +1,17 @@
+{
+  "name": "dealdrop-monorepo",
+  "private": true,
+  "version": "0.2.0",
+  "packageManager": "pnpm@10.16.1",
+  "scripts": {
+    "build": "pnpm -r --if-present build",
+    "dev": "pnpm --filter @dealdrop/api dev",
+    "dev:admin": "pnpm --filter @dealdrop/admin-web dev",
+    "dev:workers": "pnpm --filter @dealdrop/workers-* dev",
+    "typecheck": "pnpm -r --if-present typecheck",
+    "lint": "pnpm -r --if-present lint",
+    "test": "pnpm -r --if-present test",
+    "db:migrate": "pnpm --filter @dealdrop/api db:migrate",
+    "db:seed": "pnpm --filter @dealdrop/api db:seed"
+  }
+}

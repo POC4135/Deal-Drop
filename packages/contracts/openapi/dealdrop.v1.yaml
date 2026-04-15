@@ -1,107 +1,1297 @@
 openapi: 3.1.0
 info:
   title: DealDrop API
-  version: 1.0.0
-  description: |
-    Contract-first foundation for the DealDrop mobile app, admin portal, and
-    async worker pipelines.
+  version: 2.0.0
+  description: >
+    Contract-first API foundation for the DealDrop mobile app, admin portal,
+    and async worker ecosystem.
 servers:
   - url: https://api.dealdrop.app
+tags:
+  - name: Auth
+  - name: Discovery
+  - name: Listings
+  - name: Identity
+  - name: Contributions
+  - name: Notifications
+  - name: Leaderboards
+  - name: Telemetry
+  - name: Admin
 paths:
-  /v1/discovery/feed:
+  /health/live:
     get:
-      summary: Return nearby curated deal cards for the primary feed.
-      parameters:
-        - in: query
-          name: city
-          schema:
-            type: string
-        - in: query
-          name: latitude
-          schema:
-            type: number
-        - in: query
-          name: longitude
-          schema:
-            type: number
-        - in: query
-          name: filter
-          schema:
-            type: string
+      tags: [Admin]
+      summary: Liveness probe.
       responses:
         '200':
-          description: Feed response
-  /v1/discovery/map:
+          description: Service is live.
+  /health/ready:
     get:
-      summary: Return clustered map results for a bounding box and zoom level.
+      tags: [Admin]
+      summary: Readiness probe.
+      responses:
+        '200':
+          description: Dependencies are configured.
+  /v1/feed/home:
+    get:
+      tags: [Discovery]
+      summary: Return the curated home feed.
+      parameters:
+        - $ref: '#/components/parameters/Latitude'
+        - $ref: '#/components/parameters/Longitude'
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Feed response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeedResponse'
+  /v1/listings/live-now:
+    get:
+      tags: [Discovery]
+      summary: Return currently active listings.
+      parameters:
+        - $ref: '#/components/parameters/Latitude'
+        - $ref: '#/components/parameters/Longitude'
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Listing collection response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListingCollectionResponse'
+  /v1/listings/tonight:
+    get:
+      tags: [Discovery]
+      summary: Return tonight listings.
+      parameters:
+        - $ref: '#/components/parameters/Latitude'
+        - $ref: '#/components/parameters/Longitude'
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Listing collection response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListingCollectionResponse'
+  /v1/listings/nearby:
+    get:
+      tags: [Discovery]
+      summary: Return nearby listings sorted by distance.
+      parameters:
+        - $ref: '#/components/parameters/Latitude'
+        - $ref: '#/components/parameters/Longitude'
+        - in: query
+          name: radiusMiles
+          schema:
+            type: number
+            default: 3
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Nearby listing response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListingCollectionResponse'
+  /v1/listings/map-bounds:
+    get:
+      tags: [Discovery]
+      summary: Return listings inside a map bounding box.
       parameters:
         - in: query
-          name: bbox
+          name: north
+          required: true
           schema:
-            type: string
+            type: number
+        - in: query
+          name: south
+          required: true
+          schema:
+            type: number
+        - in: query
+          name: east
+          required: true
+          schema:
+            type: number
+        - in: query
+          name: west
+          required: true
+          schema:
+            type: number
         - in: query
           name: zoom
           schema:
-            type: integer
+            type: number
+        - in: query
+          name: trustBand
+          schema:
+            $ref: '#/components/schemas/TrustBand'
       responses:
         '200':
-          description: Map cluster response
-  /v1/search/suggestions:
+          description: Map listing results.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MapListing'
+  /v1/search:
     get:
-      summary: Return search suggestions across venue, cuisine, area, and tags.
+      tags: [Discovery]
+      summary: Search venues and listings.
+      parameters:
+        - in: query
+          name: q
+          schema:
+            type: string
+        - in: query
+          name: neighborhood
+          schema:
+            type: string
+        - in: query
+          name: trustBand
+          schema:
+            $ref: '#/components/schemas/TrustBand'
+        - in: query
+          name: sort
+          schema:
+            type: string
+            enum: [distance, confidence]
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
       responses:
         '200':
-          description: Suggestion response
+          description: Search results.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchResult'
+  /v1/filters/metadata:
+    get:
+      tags: [Discovery]
+      summary: Return filter metadata.
+      responses:
+        '200':
+          description: Filters metadata.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FiltersMetadata'
   /v1/listings/{listingId}:
     get:
-      summary: Return the listing detail read model.
+      tags: [Listings]
+      summary: Return a listing detail record.
+      parameters:
+        - $ref: '#/components/parameters/ListingId'
+      responses:
+        '200':
+          description: Listing detail.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListingDetail'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /v1/venues/{venueId}:
+    get:
+      tags: [Listings]
+      summary: Return a venue detail record.
+      parameters:
+        - $ref: '#/components/parameters/VenueId'
+      responses:
+        '200':
+          description: Venue detail.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VenueDetail'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /v1/favorites/{listingId}:
+    post:
+      tags: [Listings]
+      summary: Save a listing for the active user.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ListingId'
+      responses:
+        '204':
+          description: Saved.
+    delete:
+      tags: [Listings]
+      summary: Remove a saved listing.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ListingId'
+      responses:
+        '204':
+          description: Unsaved.
+  /v1/favorites/sync:
+    post:
+      tags: [Listings]
+      summary: Merge guest-local saves into the authenticated account.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FavoritesSyncRequest'
+      responses:
+        '200':
+          description: Current saved listing cards.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ListingCard'
+  /v1/listings/{listingId}/confirm:
+    post:
+      tags: [Contributions]
+      summary: Record a validity confirmation.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ListingId'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                proofAssetKey:
+                  type: string
+      responses:
+        '200':
+          description: Updated trust state.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  confidenceScore:
+                    type: number
+                  trustBand:
+                    $ref: '#/components/schemas/TrustBand'
+  /v1/listings/{listingId}/report-expired:
+    post:
+      tags: [Contributions]
+      summary: Report a listing as expired or incorrect.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ListingId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReportExpired'
+      responses:
+        '200':
+          description: Report accepted.
+  /v1/contributions/listings:
+    post:
+      tags: [Contributions]
+      summary: Suggest a new listing.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContributionCreate'
+      responses:
+        '202':
+          description: Contribution accepted for moderation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContributionAccepted'
+  /v1/contributions/listings/{listingId}/update:
+    post:
+      tags: [Contributions]
+      summary: Suggest an update to an existing listing.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ListingId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContributionUpdate'
+      responses:
+        '202':
+          description: Contribution accepted for moderation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContributionAccepted'
+  /v1/contributions/proofs/presign:
+    post:
+      tags: [Contributions]
+      summary: Request a proof-upload signed URL.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                contentType:
+                  type: string
+      responses:
+        '200':
+          description: Presigned upload target.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProofPresignResponse'
+  /v1/me/profile:
+    get:
+      tags: [Identity]
+      summary: Return the active user profile.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User profile.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Profile'
+  /v1/me/karma:
+    get:
+      tags: [Identity]
+      summary: Return the active user karma and leaderboard snapshot.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: window
+          schema:
+            $ref: '#/components/schemas/LeaderboardWindow'
+      responses:
+        '200':
+          description: Karma summary.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KarmaSummary'
+  /v1/me/contributions:
+    get:
+      tags: [Identity]
+      summary: Return the active user's contribution history.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Contribution history.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContributionHistoryResponse'
+  /v1/me/saved:
+    get:
+      tags: [Identity]
+      summary: Return the active user's saved listings.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Saved listings.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ListingCard'
+  /v1/auth/sign-in:
+    post:
+      tags: [Auth]
+      summary: Sign in with email and password.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthRequest'
+      responses:
+        '200':
+          description: Authenticated session.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+  /v1/auth/sign-up:
+    post:
+      tags: [Auth]
+      summary: Create an account and return the authenticated session.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/AuthRequest'
+                - type: object
+                  required: [displayName, homeNeighborhood]
+      responses:
+        '200':
+          description: Authenticated session.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+  /v1/leaderboards:
+    get:
+      tags: [Leaderboards]
+      summary: Return leaderboard entries for the requested window.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: window
+          schema:
+            $ref: '#/components/schemas/LeaderboardWindow'
+      responses:
+        '200':
+          description: Leaderboard results.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaderboardResponse'
+  /v1/notifications:
+    get:
+      tags: [Notifications]
+      summary: Return the in-app notification inbox.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Notifications payload.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationsResponse'
+  /v1/notifications/{notificationId}/read:
+    post:
+      tags: [Notifications]
+      summary: Mark an inbox notification as read.
+      security:
+        - bearerAuth: []
       parameters:
         - in: path
-          name: listingId
+          name: notificationId
           required: true
           schema:
             type: string
       responses:
         '200':
-          description: Listing detail response
-  /v1/saved:
-    post:
-      summary: Save a listing for the active user.
+          description: Updated notification record.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationRecord'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /v1/me/preferences:
+    get:
+      tags: [Notifications]
+      summary: Return the active user's notification preferences.
+      security:
+        - bearerAuth: []
       responses:
-        '204':
-          description: Saved
+        '200':
+          description: Preferences payload.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserPreferences'
+    put:
+      tags: [Notifications]
+      summary: Update the active user's notification preferences.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserPreferences'
+      responses:
+        '200':
+          description: Updated preferences.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserPreferences'
+  /v1/devices/register:
+    post:
+      tags: [Notifications]
+      summary: Register a device for push and inbox targeting.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeviceRegistration'
+      responses:
+        '200':
+          description: Registered device details.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceRegistration'
+  /v1/devices/{deviceId}:
     delete:
-      summary: Remove a saved listing for the active user.
+      tags: [Notifications]
+      summary: Unregister a device.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: deviceId
+          required: true
+          schema:
+            type: string
       responses:
         '204':
-          description: Unsaved
-  /v1/contributions:
+          description: Device unregistered.
+  /v1/telemetry/events:
     post:
-      summary: Submit a moderated contribution payload.
-      responses:
-        '202':
-          description: Contribution accepted for review
-  /v1/listings/{listingId}/confirm:
-    post:
-      summary: Submit a validity confirmation event for a listing.
-      responses:
-        '202':
-          description: Confirmation accepted
-  /v1/listings/{listingId}/report:
-    post:
-      summary: Submit an issue report for a listing.
-      responses:
-        '202':
-          description: Report accepted
-  /v1/me/karma:
-    get:
-      summary: Return the current user karma summary.
+      tags: [Telemetry]
+      summary: Ingest mobile analytics and diagnostic events.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TelemetryBatch'
       responses:
         '200':
-          description: Karma response
-  /v1/me/profile:
+          description: Accepted telemetry count.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  accepted:
+                    type: integer
+  /v1/admin/dashboard:
     get:
-      summary: Return the current user profile summary.
+      tags: [Admin]
+      summary: Return operator dashboard metrics.
+      security:
+        - bearerAuth: []
       responses:
         '200':
-          description: Profile response
+          description: Dashboard metrics.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminDashboard'
+  /v1/admin/queues/moderation:
+    get:
+      tags: [Admin]
+      summary: Return the contribution moderation queue.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Moderation queue.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AdminQueueItem'
+  /v1/admin/queues/reports:
+    get:
+      tags: [Admin]
+      summary: Return the reports queue.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Reports queue.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AdminQueueItem'
+  /v1/admin/queues/stale:
+    get:
+      tags: [Admin]
+      summary: Return the stale listings queue.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Stale queue.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AdminQueueItem'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    Latitude:
+      in: query
+      name: latitude
+      schema:
+        type: number
+    Longitude:
+      in: query
+      name: longitude
+      schema:
+        type: number
+    Cursor:
+      in: query
+      name: cursor
+      schema:
+        type: string
+    Limit:
+      in: query
+      name: limit
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 50
+        default: 20
+    ListingId:
+      in: path
+      name: listingId
+      required: true
+      schema:
+        type: string
+    VenueId:
+      in: path
+      name: venueId
+      required: true
+      schema:
+        type: string
+  responses:
+    NotFound:
+      description: Resource not found.
+  schemas:
+    TrustBand:
+      type: string
+      enum: [founder_verified, merchant_confirmed, user_confirmed, recently_updated, needs_recheck, disputed]
+    LeaderboardWindow:
+      type: string
+      enum: [daily, weekly, all_time]
+    TrustSummary:
+      type: object
+      properties:
+        band:
+          $ref: '#/components/schemas/TrustBand'
+        explanation:
+          type: string
+        confidenceScore:
+          type: number
+        freshUntilAt:
+          type: string
+          format: date-time
+        recheckAfterAt:
+          type: string
+          format: date-time
+        proofCount:
+          type: integer
+        recentConfirmations:
+          type: integer
+        disputeCount:
+          type: integer
+    ListingCard:
+      type: object
+      required:
+        [id, venueId, venueName, title, neighborhood, categoryLabel, scheduleLabel, trustBand, freshnessText]
+      properties:
+        id:
+          type: string
+        venueId:
+          type: string
+        venueName:
+          type: string
+        title:
+          type: string
+        neighborhood:
+          type: string
+        categoryLabel:
+          type: string
+        scheduleLabel:
+          type: string
+        trustBand:
+          $ref: '#/components/schemas/TrustBand'
+        freshnessText:
+          type: string
+        valueNote:
+          type: string
+        affordabilityLabel:
+          type: string
+        distanceMiles:
+          type: number
+        rating:
+          type: number
+        cuisine:
+          type: string
+        latitude:
+          type: number
+        longitude:
+          type: number
+        confidenceScore:
+          type: number
+        lastUpdatedAt:
+          type: string
+          format: date-time
+          nullable: true
+        tags:
+          type: array
+          items:
+            type: string
+        saved:
+          type: boolean
+    ListingDetail:
+      allOf:
+        - $ref: '#/components/schemas/ListingCard'
+        - type: object
+          properties:
+            venueAddress:
+              type: string
+            description:
+              type: string
+            conditions:
+              type: string
+            sourceNote:
+              type: string
+            offers:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  title:
+                    type: string
+                  originalPrice:
+                    type: number
+                  dealPrice:
+                    type: number
+                  currency:
+                    type: string
+            confidenceScore:
+              type: number
+            freshUntilAt:
+              type: string
+              format: date-time
+            recheckAfterAt:
+              type: string
+              format: date-time
+            proofCount:
+              type: integer
+            trustSummary:
+              $ref: '#/components/schemas/TrustSummary'
+    VenueDetail:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        neighborhood:
+          type: string
+        address:
+          type: string
+        latitude:
+          type: number
+        longitude:
+          type: number
+        rating:
+          type: number
+        listingIds:
+          type: array
+          items:
+            type: string
+        tags:
+          type: array
+          items:
+            type: string
+        activeListingCount:
+          type: integer
+    MapListing:
+      type: object
+      properties:
+        listingId:
+          type: string
+        venueId:
+          type: string
+        venueName:
+          type: string
+        latitude:
+          type: number
+        longitude:
+          type: number
+        trustBand:
+          $ref: '#/components/schemas/TrustBand'
+        title:
+          type: string
+        neighborhood:
+          type: string
+        confidenceScore:
+          type: number
+        affordabilityLabel:
+          type: string
+        saved:
+          type: boolean
+    FeedSection:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        subtitle:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ListingCard'
+    FeedResponse:
+      type: object
+      properties:
+        sections:
+          type: array
+          items:
+            $ref: '#/components/schemas/FeedSection'
+        nextCursor:
+          type: string
+          nullable: true
+    ListingCollectionResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ListingCard'
+        nextCursor:
+          type: string
+          nullable: true
+    SearchResult:
+      type: object
+      properties:
+        listings:
+          type: array
+          items:
+            $ref: '#/components/schemas/ListingCard'
+        venues:
+          type: array
+          items:
+            $ref: '#/components/schemas/VenueDetail'
+        neighborhoods:
+          type: array
+          items:
+            type: string
+        suggestions:
+          type: array
+          items:
+            type: string
+        nextCursor:
+          type: string
+          nullable: true
+    FiltersMetadata:
+      type: object
+      properties:
+        neighborhoods:
+          type: array
+          items:
+            type: string
+        cuisines:
+          type: array
+          items:
+            type: string
+        tags:
+          type: array
+          items:
+            type: string
+        trustBands:
+          type: array
+          items:
+            $ref: '#/components/schemas/TrustBand'
+    Profile:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+          format: email
+        displayName:
+          type: string
+        homeNeighborhood:
+          type: string
+        role:
+          type: string
+          enum: [user, moderator, admin]
+        verifiedContributor:
+          type: boolean
+    KarmaSummary:
+      type: object
+      properties:
+        userId:
+          type: string
+        points:
+          type: integer
+        pendingPoints:
+          type: integer
+        verifiedContributor:
+          type: boolean
+        currentStreakDays:
+          type: integer
+        level:
+          type: string
+        nextLevelPoints:
+          type: integer
+        impactUsersHelped:
+          type: integer
+        approvedContributions:
+          type: integer
+        pendingContributions:
+          type: integer
+        badges:
+          type: array
+          items:
+            type: object
+            properties:
+              code:
+                type: string
+              title:
+                type: string
+              description:
+                type: string
+              unlocked:
+                type: boolean
+        leaderboard:
+          type: array
+          items:
+            type: object
+            properties:
+              rank:
+                type: integer
+              userId:
+                type: string
+              displayName:
+                type: string
+              title:
+                type: string
+                points:
+                  type: integer
+              verifiedContributor:
+                type: boolean
+    LeaderboardResponse:
+      type: object
+      properties:
+        window:
+          $ref: '#/components/schemas/LeaderboardWindow'
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              rank:
+                type: integer
+              userId:
+                type: string
+              displayName:
+                type: string
+              title:
+                type: string
+              points:
+                type: integer
+              verifiedContributor:
+                type: boolean
+    ContributionCreate:
+      type: object
+      properties:
+        venueName:
+          type: string
+        neighborhood:
+          type: string
+        latitude:
+          type: number
+        longitude:
+          type: number
+        title:
+          type: string
+        description:
+          type: string
+        conditions:
+          type: string
+        scheduleSummary:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        proofAssetKeys:
+          type: array
+          items:
+            type: string
+    ContributionUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        conditions:
+          type: string
+        scheduleSummary:
+          type: string
+        proofAssetKeys:
+          type: array
+          items:
+            type: string
+    ContributionAccepted:
+      type: object
+      properties:
+        contributionId:
+          type: string
+        duplicateCandidateIds:
+          type: array
+          items:
+            type: string
+    ContributionRecord:
+      type: object
+      properties:
+        id:
+          type: string
+        listingId:
+          type: string
+        listingTitle:
+          type: string
+        venueName:
+          type: string
+        neighborhood:
+          type: string
+        type:
+          type: string
+          enum: [new_listing, listing_update, confirm_valid, report_expired]
+        status:
+          type: string
+          enum: [submitted, needs_proof, under_review, approved, rejected, merged]
+        createdAt:
+          type: string
+          format: date-time
+        summary:
+          type: string
+        pointsDelta:
+          type: integer
+        pointsStatus:
+          type: string
+          enum: [pending, finalized, reversed]
+    ContributionHistoryResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContributionRecord'
+    ReportExpired:
+      type: object
+      properties:
+        reason:
+          type: string
+        notes:
+          type: string
+    FavoritesSyncRequest:
+      type: object
+      properties:
+        listingIds:
+          type: array
+          items:
+            type: string
+    ProofPresignResponse:
+      type: object
+      properties:
+        assetKey:
+          type: string
+        uploadUrl:
+          type: string
+    AuthRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+        displayName:
+          type: string
+        homeNeighborhood:
+          type: string
+    AuthSession:
+      type: object
+      properties:
+        userId:
+          type: string
+        email:
+          type: string
+          format: email
+        displayName:
+          type: string
+        role:
+          type: string
+          enum: [user, moderator, admin]
+        verifiedContributor:
+          type: boolean
+    AuthResponse:
+      type: object
+      properties:
+        session:
+          $ref: '#/components/schemas/AuthSession'
+        profile:
+          $ref: '#/components/schemas/Profile'
+    NotificationRecord:
+      type: object
+      properties:
+        id:
+          type: string
+        kind:
+          type: string
+          enum: [contribution_resolved, points_finalized, trust_status_changed, listing_reported_stale, moderation_update]
+        title:
+          type: string
+        body:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        readAt:
+          type: string
+          format: date-time
+          nullable: true
+        deepLink:
+          type: string
+          nullable: true
+    NotificationsResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/NotificationRecord'
+        unreadCount:
+          type: integer
+    UserPreferences:
+      type: object
+      properties:
+        contributionResolved:
+          type: boolean
+        pointsFinalized:
+          type: boolean
+        trustStatusChanged:
+          type: boolean
+        marketingAnnouncements:
+          type: boolean
+    DeviceRegistration:
+      type: object
+      properties:
+        deviceId:
+          type: string
+        platform:
+          type: string
+          enum: [ios, android, web, macos, windows, linux]
+        pushToken:
+          type: string
+          nullable: true
+        locale:
+          type: string
+        notificationsEnabled:
+          type: boolean
+    TelemetryEvent:
+      type: object
+      properties:
+        name:
+          type: string
+        screen:
+          type: string
+        happenedAt:
+          type: string
+          format: date-time
+        properties:
+          type: object
+          additionalProperties: true
+    TelemetryBatch:
+      type: object
+      properties:
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/TelemetryEvent'
+    AdminDashboard:
+      type: object
+      properties:
+        openContributionCount:
+          type: integer
+        openReportCount:
+          type: integer
+        staleListingCount:
+          type: integer
+        highRiskListings:
+          type: array
+          items:
+            $ref: '#/components/schemas/ListingCard'
+    AdminQueueItem:
+      type: object
+      properties:
+        id:
+          type: string
+        entityId:
+          type: string
+        type:
+          type: string
+          enum: [contribution, report, stale_listing]
+        title:
+          type: string
+        subtitle:
+          type: string
+        neighborhood:
+          type: string
+        trustBand:
+          $ref: '#/components/schemas/TrustBand'
+        createdAt:
+          type: string
+          format: date-time
+        priority:
+          type: string
+          enum: [low, medium, high]
+        status:
+          type: string

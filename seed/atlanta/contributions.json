@@ -1,0 +1,29 @@
+[
+  {
+    "id": "con_001",
+    "listingId": "lst_bogo_ramen",
+    "userId": "usr_alex",
+    "type": "confirm_valid",
+    "status": "approved",
+    "neighborhood": "Midtown",
+    "summary": "Confirmed dinner promo is active at register."
+  },
+  {
+    "id": "con_002",
+    "listingId": "lst_slice_combo",
+    "userId": "usr_sam",
+    "type": "listing_update",
+    "status": "under_review",
+    "neighborhood": "Ponce",
+    "summary": "Claimed the combo is no longer valid after 10PM."
+  },
+  {
+    "id": "con_003",
+    "listingId": "lst_happy_hour_pitcher",
+    "userId": "usr_maya",
+    "type": "listing_update",
+    "status": "submitted",
+    "neighborhood": "Beltline East",
+    "summary": "Attached photo for updated drink pricing board."
+  }
+]

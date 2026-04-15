@@ -22,6 +22,6 @@ Accepted
 
 ## Consequences
 
-- Some screens still rely on inferred extensions until aligned canonical mockups arrive.
-- The app can ship a strong read-only browse experience before backend and moderation write paths are complete.
-- The service and admin packages are scaffolded but not locally runnable until a Node.js toolchain is installed.
+- Some visual refinements still rely on inferred extensions until the final brand asset pack arrives.
+- The mobile app now ships with live read paths and offline-aware write flows, but release hardening still depends on secure token storage and native push completion.
+- The service, workers, admin console, and IaC now exist as implementation foundations, but full platform validation still depends on installing the Node.js and Terraform toolchains.

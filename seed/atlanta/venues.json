@@ -1,0 +1,56 @@
+[
+  {
+    "id": "ven_taqueria_del_sol",
+    "name": "Taqueria del Sol",
+    "neighborhood": "West Midtown",
+    "address": "1200 Howell Mill Rd NW, Atlanta, GA 30318",
+    "latitude": 33.7867,
+    "longitude": -84.4112,
+    "tags": ["cheap-eats", "students", "live-now"]
+  },
+  {
+    "id": "ven_sakura_ramen",
+    "name": "Sakura Ramen House",
+    "neighborhood": "Midtown",
+    "address": "933 Peachtree St NE, Atlanta, GA 30309",
+    "latitude": 33.7815,
+    "longitude": -84.3873,
+    "tags": ["tonight", "groups"]
+  },
+  {
+    "id": "ven_bella_napoli",
+    "name": "Bella Napoli",
+    "neighborhood": "Ponce",
+    "address": "650 North Ave NE, Atlanta, GA 30308",
+    "latitude": 33.7721,
+    "longitude": -84.3632,
+    "tags": ["late-night", "beltline"]
+  },
+  {
+    "id": "ven_holy_guac",
+    "name": "Holy Guac",
+    "neighborhood": "North Avenue",
+    "address": "685 North Ave NE, Atlanta, GA 30308",
+    "latitude": 33.7714,
+    "longitude": -84.3639,
+    "tags": ["student", "cheap-eats"]
+  },
+  {
+    "id": "ven_neon_ramen",
+    "name": "Neon Ramen",
+    "neighborhood": "Colony Square",
+    "address": "1197 Peachtree St NE, Atlanta, GA 30361",
+    "latitude": 33.7863,
+    "longitude": -84.3838,
+    "tags": ["tonight", "groups"]
+  },
+  {
+    "id": "ven_beltline_bar",
+    "name": "Beltline Bar",
+    "neighborhood": "Beltline East",
+    "address": "725 Ponce De Leon Ave NE, Atlanta, GA 30306",
+    "latitude": 33.7728,
+    "longitude": -84.3661,
+    "tags": ["drinks", "happy-hour"]
+  }
+]

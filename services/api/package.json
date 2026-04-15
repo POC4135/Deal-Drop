@@ -1,16 +1,40 @@
 {
   "name": "@dealdrop/api",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "tsx src/index.ts",
+    "dev": "tsx watch src/index.ts",
     "build": "tsc -p tsconfig.json",
-    "start": "node dist/index.js"
+    "start": "node dist/index.js",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "db:migrate": "tsx src/db/scripts/migrate.ts",
+    "db:seed": "tsx src/db/scripts/seed.ts",
+    "worker:read-model": "tsx src/workers/read-model.ts",
+    "worker:trust": "tsx src/workers/trust.ts",
+    "worker:gamification": "tsx src/workers/gamification.ts",
+    "worker:stale-scan": "tsx src/workers/stale-scan.ts",
+    "worker:outbox-relay": "tsx src/workers/outbox-relay.ts"
+  },
+  "dependencies": {
+    "@dealdrop/config": "workspace:*",
+    "@dealdrop/shared-types": "workspace:*",
+    "@fastify/cors": "^10.0.1",
+    "drizzle-orm": "^0.39.0",
+    "fastify": "^5.2.1",
+    "ioredis": "^5.4.2",
+    "jose": "^6.0.8",
+    "pino-pretty": "^13.0.0",
+    "pg": "^8.13.1",
+    "ulid": "^2.3.0",
+    "zod": "^3.24.2"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
+    "drizzle-kit": "^0.30.6",
     "tsx": "^4.19.2",
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.2",
+    "vitest": "^3.0.5"
   }
 }

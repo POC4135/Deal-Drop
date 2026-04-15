@@ -3,3 +3,4 @@ packages:
   - services/*
   - services/workers/*
   - packages/*
+  - tests
