@@ -11,7 +11,8 @@ class SavedScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final savedDeals = ref.watch(savedDealsProvider);
+    final savedDealsAsync = ref.watch(savedDealsProvider);
+    final savedDeals = savedDealsAsync.valueOrNull ?? [];
     final savedIds = ref.watch(favoritesControllerProvider).valueOrNull ?? {};
 
     return Scaffold(
@@ -44,7 +45,9 @@ class SavedScreen extends ConsumerWidget {
                 ],
               ),
               const SizedBox(height: 20),
-              if (savedDeals.isEmpty)
+              if (savedDealsAsync.isLoading)
+                const Expanded(child: Center(child: CircularProgressIndicator()))
+              else if (savedDeals.isEmpty)
                 Expanded(
                   child: Center(
                     child: Container(

@@ -13,16 +13,22 @@ class ListingDetailScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final deal = ref.watch(dealProvider(listingId));
+    final dealAsync = ref.watch(dealProvider(listingId));
     final savedIds = ref.watch(favoritesControllerProvider).valueOrNull ?? {};
 
-    if (deal == null) {
-      return Scaffold(
-        appBar: AppBar(),
-        body: const Center(child: Text('Listing not found')),
-      );
-    }
+    return dealAsync.when(
+      loading: () => Scaffold(appBar: AppBar(), body: const Center(child: CircularProgressIndicator())),
+      error: (_, __) => Scaffold(appBar: AppBar(), body: const Center(child: Text('Listing not found'))),
+      data: (deal) {
+        if (deal == null) {
+          return Scaffold(appBar: AppBar(), body: const Center(child: Text('Listing not found')));
+        }
+        return _buildDetail(context, ref, deal, savedIds);
+      },
+    );
+  }
 
+  Widget _buildDetail(BuildContext context, WidgetRef ref, Deal deal, Set<String> savedIds) {
     final isSaved = savedIds.contains(deal.id);
 
     return Scaffold(

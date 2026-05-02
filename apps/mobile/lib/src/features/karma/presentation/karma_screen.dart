@@ -3,19 +3,47 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
-import '../data/seed_karma_repository.dart';
+import '../../../core/network/api_client.dart';
+import '../data/api_karma_repository.dart';
 import '../domain/karma_models.dart';
 
-final karmaRepositoryProvider = Provider<SeedKarmaRepository>(
-  (ref) => const SeedKarmaRepository(),
+final karmaRepositoryProvider = Provider<ApiKarmaRepository>(
+  (ref) => ApiKarmaRepository(ref.watch(apiClientProvider)),
 );
+
+final karmaSnapshotProvider = FutureProvider<KarmaSnapshot>((ref) async {
+  return ref.watch(karmaRepositoryProvider).snapshot();
+});
 
 class KarmaScreen extends ConsumerWidget {
   const KarmaScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final snapshot = ref.watch(karmaRepositoryProvider).snapshot();
+    final karmaAsync = ref.watch(karmaSnapshotProvider);
+
+    return karmaAsync.when(
+      loading: () => const SafeArea(
+        child: Center(child: CircularProgressIndicator()),
+      ),
+      error: (e, _) => SafeArea(
+        child: Center(
+          child: Text('Could not load karma data.',
+              style: Theme.of(context).textTheme.bodyLarge),
+        ),
+      ),
+      data: (snapshot) => _KarmaContent(snapshot: snapshot),
+    );
+  }
+}
+
+class _KarmaContent extends StatelessWidget {
+  const _KarmaContent({required this.snapshot});
+
+  final KarmaSnapshot snapshot;
+
+  @override
+  Widget build(BuildContext context) {
     final pointsText = NumberFormat.decimalPattern().format(snapshot.points);
 
     return SafeArea(
@@ -25,6 +53,7 @@ class KarmaScreen extends ConsumerWidget {
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
             sliver: SliverList(
               delegate: SliverChildListDelegate.fixed([
+
                 Row(
                   children: [
                     Expanded(
@@ -58,11 +87,13 @@ class KarmaScreen extends ConsumerWidget {
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            pointsText,
-                            style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                                  color: Colors.white,
-                                ),
+                          Flexible(
+                            child: Text(
+                              pointsText,
+                              style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                                    color: Colors.white,
+                                  ),
+                            ),
                           ),
                           const SizedBox(width: 12),
                           if (snapshot.verifiedContributor)

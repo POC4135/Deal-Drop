@@ -3,12 +3,12 @@ import 'package:flutter/material.dart';
 import '../domain/deal.dart';
 
 abstract class DealsRepository {
-  List<Deal> listDeals();
+  Future<List<Deal>> listDeals();
 }
 
 class SeedDealsRepository implements DealsRepository {
   @override
-  List<Deal> listDeals() {
+  Future<List<Deal>> listDeals() async {
     return const [
       Deal(
         id: 'taqueria-del-sol',
@@ -29,6 +29,8 @@ class SeedDealsRepository implements DealsRepository {
         tone: DealTone.peach,
         mapDx: 0.19,
         mapDy: 0.24,
+        lat: 33.7896,
+        lng: -84.3975,
         icon: Icons.local_dining_rounded,
         offers: [
           DealOffer(title: 'Taco Tuesday Special', originalPrice: 9.99, dealPrice: 4.99),
@@ -55,6 +57,8 @@ class SeedDealsRepository implements DealsRepository {
         tone: DealTone.rose,
         mapDx: 0.62,
         mapDy: 0.34,
+        lat: 33.7838,
+        lng: -84.3818,
         icon: Icons.ramen_dining_rounded,
         offers: [
           DealOffer(title: 'Tonkotsu Ramen', originalPrice: 14.99, dealPrice: 8.99),
@@ -80,6 +84,8 @@ class SeedDealsRepository implements DealsRepository {
         tone: DealTone.sky,
         mapDx: 0.47,
         mapDy: 0.58,
+        lat: 33.7748,
+        lng: -84.3832,
         icon: Icons.local_pizza_rounded,
         offers: [
           DealOffer(title: 'Slice + Drink', originalPrice: 8.50, dealPrice: 5.00),
@@ -105,6 +111,8 @@ class SeedDealsRepository implements DealsRepository {
         tone: DealTone.gold,
         mapDx: 0.27,
         mapDy: 0.46,
+        lat: 33.7800,
+        lng: -84.3927,
         icon: Icons.tapas_rounded,
         offers: [
           DealOffer(title: 'Any Taco', originalPrice: 4.50, dealPrice: 2.00),
@@ -130,6 +138,8 @@ class SeedDealsRepository implements DealsRepository {
         tone: DealTone.mint,
         mapDx: 0.61,
         mapDy: 0.72,
+        lat: 33.7895,
+        lng: -84.3838,
         icon: Icons.soup_kitchen_rounded,
         offers: [
           DealOffer(title: 'Signature Bowl + Gyoza', originalPrice: 18.00, dealPrice: 12.00),
@@ -154,6 +164,8 @@ class SeedDealsRepository implements DealsRepository {
         tone: DealTone.lilac,
         mapDx: 0.73,
         mapDy: 0.19,
+        lat: 33.7756,
+        lng: -84.3789,
         icon: Icons.local_pizza_outlined,
         offers: [
           DealOffer(title: 'Large Pizza BOGO', originalPrice: 22.00, dealPrice: 11.00),

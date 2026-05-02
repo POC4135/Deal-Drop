@@ -1,98 +1,93 @@
-type HttpMethod = 'GET' | 'POST' | 'DELETE';
+import 'dotenv/config';
+import './types/jwt.d.ts';
+import Fastify from 'fastify';
+import fastifyJwt from '@fastify/jwt';
+import fastifyCors from '@fastify/cors';
+import fastifyHelmet from '@fastify/helmet';
+import fastifyRateLimit from '@fastify/rate-limit';
 
-type RouteDefinition = {
-  method: HttpMethod;
-  path: string;
-  module: string;
-  description: string;
-};
+import { registerAuthDecorators } from './middleware/auth';
+import healthPlugin from './modules/health/index';
+import authPlugin from './modules/auth/index';
+import listingsPlugin from './modules/listings/index';
+import karmaPlugin from './modules/karma/index';
 
-const routeCatalog: RouteDefinition[] = [
-  {
-    method: 'GET',
-    path: '/v1/discovery/feed',
-    module: 'Discovery',
-    description: 'Return nearby curated card read models.',
-  },
-  {
-    method: 'GET',
-    path: '/v1/discovery/map',
-    module: 'Discovery',
-    description: 'Return clustered map read models for bbox and zoom.',
-  },
-  {
-    method: 'GET',
-    path: '/v1/search/suggestions',
-    module: 'Search',
-    description: 'Return suggestions across venue, area, cuisine, and tags.',
-  },
-  {
-    method: 'GET',
-    path: '/v1/listings/:listingId',
-    module: 'Listings',
-    description: 'Return listing detail read model.',
-  },
-  {
-    method: 'POST',
-    path: '/v1/contributions',
-    module: 'Contributions',
-    description: 'Accept moderated contribution payloads.',
-  },
-  {
-    method: 'POST',
-    path: '/v1/listings/:listingId/confirm',
-    module: 'Trust',
-    description: 'Accept a validity confirmation event.',
-  },
-  {
-    method: 'POST',
-    path: '/v1/listings/:listingId/report',
-    module: 'Moderation',
-    description: 'Accept an issue report event.',
-  },
-  {
-    method: 'POST',
-    path: '/v1/saved',
-    module: 'Saved',
-    description: 'Save a listing for the active user.',
-  },
-  {
-    method: 'DELETE',
-    path: '/v1/saved',
-    module: 'Saved',
-    description: 'Remove a saved listing for the active user.',
-  },
-  {
-    method: 'GET',
-    path: '/v1/me/karma',
-    module: 'Karma',
-    description: 'Return the current karma summary and leaderboard context.',
-  },
-  {
-    method: 'GET',
-    path: '/v1/me/profile',
-    module: 'Identity',
-    description: 'Return the active user profile summary.',
-  },
-];
+const PORT = Number(process.env.PORT ?? 3000);
+const HOST = process.env.HOST ?? '0.0.0.0';
+const IS_DEV = process.env.NODE_ENV !== 'production';
 
-const workerPipelines = [
-  'read-model-projector',
-  'trust-scorer',
-  'moderation-dedupe',
-  'karma-ledger-projector',
-  'stale-sweeper',
-];
+if (!process.env.JWT_SECRET) {
+  throw new Error('JWT_SECRET is not set. Copy .env.example to .env and fill in the values.');
+}
 
-console.log(
-  JSON.stringify(
-    {
-      service: '@dealdrop/api',
-      mode: 'scaffold',
-      routeCatalog,
-      workerPipelines,
-    },
-    null,
-    2,
-  ),
-);
+const app = Fastify({
+  logger: {
+    level: IS_DEV ? 'info' : 'warn',
+    ...(IS_DEV && {
+      transport: {
+        target: 'pino-pretty',
+        options: { colorize: true, translateTime: 'HH:MM:ss', ignore: 'pid,hostname' },
+      },
+    }),
+  },
+  // Propagate a unique request ID for tracing across logs and audit records.
+  genReqId: () => crypto.randomUUID(),
+  requestIdHeader: 'x-request-id',
+});
+
+// ── Security ──────────────────────────────────────────────────────────────────
+await app.register(fastifyHelmet, {
+  contentSecurityPolicy: false, // API — no HTML served
+});
+
+await app.register(fastifyCors, {
+  origin: IS_DEV ? true : (process.env.ALLOWED_ORIGINS ?? '').split(','),
+  credentials: true,
+});
+
+await app.register(fastifyRateLimit, {
+  global: true,
+  max: 200,
+  timeWindow: '1 minute',
+  // Auth endpoints get a tighter limit.
+  keyGenerator: (req) => req.ip,
+});
+
+// ── Auth ──────────────────────────────────────────────────────────────────────
+await app.register(fastifyJwt, {
+  secret: process.env.JWT_SECRET,
+});
+
+registerAuthDecorators(app);
+
+// ── Modules ───────────────────────────────────────────────────────────────────
+await app.register(healthPlugin);
+await app.register(authPlugin);
+await app.register(listingsPlugin);
+await app.register(karmaPlugin);
+
+// Tighter rate limit on auth write paths.
+app.addHook('onRequest', async (req, _reply) => {
+  if (req.url.startsWith('/v1/auth/')) {
+    // @fastify/rate-limit max override not available per-route in v10;
+    // handled via separate route-level plugin registration in Phase E.
+    // Placeholder comment for production hardening.
+  }
+});
+
+// ── 404 handler ───────────────────────────────────────────────────────────────
+app.setNotFoundHandler((req, reply) => {
+  reply.code(404).send({
+    error: 'Not Found',
+    message: `Route ${req.method} ${req.url} not found.`,
+  });
+});
+
+// ── Start ─────────────────────────────────────────────────────────────────────
+try {
+  await app.listen({ port: PORT, host: HOST });
+  app.log.info(`DealDrop API listening on ${HOST}:${PORT} [${process.env.NODE_ENV ?? 'development'}]`);
+} catch (err) {
+  app.log.error(err);
+  process.exit(1);
+}

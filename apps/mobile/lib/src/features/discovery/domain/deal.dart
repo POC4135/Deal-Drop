@@ -41,6 +41,8 @@ class Deal {
     required this.mapDy,
     required this.icon,
     required this.offers,
+    this.lat,
+    this.lng,
   });
 
   final String id;
@@ -63,6 +65,8 @@ class Deal {
   final double mapDy;
   final IconData icon;
   final List<DealOffer> offers;
+  final double? lat;
+  final double? lng;
 }
 
 extension DiscoveryFilterX on DiscoveryFilter {

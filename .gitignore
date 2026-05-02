@@ -50,3 +50,8 @@ dist/
 coverage/
 .next/
 node_modules/
+
+# Environment variables — never commit secrets
+.env
+.env.local
+.env.*.local

@@ -31,7 +31,9 @@ class _DealsScreenState extends ConsumerState<DealsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final deals = ref.watch(filteredDealsProvider);
+    final dealsAsync = ref.watch(filteredDealsProvider);
+    final deals = dealsAsync.valueOrNull ?? [];
+    final isLoading = dealsAsync.isLoading;
     final favorites = ref.watch(favoritesControllerProvider).valueOrNull ?? {};
     final selectedFilter = ref.watch(discoveryFilterProvider);
     final theme = Theme.of(context);
@@ -132,7 +134,25 @@ class _DealsScreenState extends ConsumerState<DealsScreen> {
                       'Curated Atlanta picks with high confidence and fast decision value.',
                 ),
                 const SizedBox(height: 22),
-                if (deals.isEmpty)
+                if (isLoading)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 40),
+                    child: Center(child: CircularProgressIndicator()),
+                  )
+                else if (dealsAsync.hasError)
+                  Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(28),
+                      boxShadow: DealDropShadows.card,
+                    ),
+                    child: Text(
+                      'Could not load deals. Check your connection and try again.',
+                      style: theme.textTheme.bodyLarge,
+                    ),
+                  )
+                else if (deals.isEmpty)
                   Container(
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
