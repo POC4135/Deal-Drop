@@ -1,0 +1,14 @@
+name: Keep alive
+
+on:
+  schedule:
+    - cron: '0 12 */4 * *'  # every 4 days at noon UTC
+  workflow_dispatch:         # allow manual trigger
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping API health
+        run: |
+          curl -sf https://deal-drop-y0qs.onrender.com/health

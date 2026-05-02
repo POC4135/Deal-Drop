@@ -1,9 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-// Base URL — iOS simulator can reach the host Mac on localhost.
-// Change to your machine's LAN IP when testing on a physical device.
-const _baseUrl = 'http://localhost:3000';
+const _baseUrl = 'https://deal-drop-y0qs.onrender.com';
 
 final apiClientProvider = Provider<ApiClient>((ref) => ApiClient());
 
