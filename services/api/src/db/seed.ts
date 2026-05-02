@@ -110,13 +110,199 @@ const VENUE_COORDS: Record<string, [number, number]> = {
 };
 
 // ── Listings ──────────────────────────────────────────────────────────────────
-// TODO: populate once deal data is provided
 
-type ListingInsert = typeof schema.listings.$inferInsert & { _slug: string; _venueSlug: string };
+type ListingInsert = Omit<typeof schema.listings.$inferInsert, 'venueId'> & { _slug: string; _venueSlug: string; venueId?: string };
 
-const listingDefs: ListingInsert[] = [];
+const listingDefs: ListingInsert[] = [
+  // ── Zoe's Tacos ─────────────────────────────────────────────────────────────
+  {
+    _slug: 'zoes-150-tacos',
+    _venueSlug: 'zoes-tacos-midtown',
+    title: '$1.50 Tacos',
+    description: '$1.50 Tacos — Tuesday & Friday',
+    category: 'cheap_eats',
+    trustBand: 'founder_verified',
+    status: 'active',
+    sourceType: 'founder_entered',
+    confidenceScore: '90',
+  },
+  {
+    _slug: 'zoes-899-burrito',
+    _venueSlug: 'zoes-tacos-midtown',
+    title: '$8.99 Burrito',
+    description: '$8.99 Burrito — Wednesdays',
+    category: 'cheap_eats',
+    trustBand: 'founder_verified',
+    status: 'active',
+    sourceType: 'founder_entered',
+    confidenceScore: '90',
+  },
+  {
+    _slug: 'zoes-599-quesadilla',
+    _venueSlug: 'zoes-tacos-midtown',
+    title: '$5.99 Quesadilla',
+    description: '$5.99 Quesadilla — Thursdays',
+    category: 'cheap_eats',
+    trustBand: 'founder_verified',
+    status: 'active',
+    sourceType: 'founder_entered',
+    confidenceScore: '90',
+  },
+  {
+    _slug: 'zoes-799-torta',
+    _venueSlug: 'zoes-tacos-midtown',
+    title: '$7.99 Torta',
+    description: '$7.99 Torta — Mondays',
+    category: 'cheap_eats',
+    trustBand: 'founder_verified',
+    status: 'active',
+    sourceType: 'founder_entered',
+    confidenceScore: '90',
+  },
+
+  // ── Moe's Southwest Grill ────────────────────────────────────────────────────
+  {
+    _slug: 'moes-699-burrito-bowl',
+    _venueSlug: 'moes-grill-midtown',
+    title: '$6.99 Burrito or Bowl',
+    description: 'Dine-in or carry-out. Rewards Members only.',
+    category: 'student_offer',
+    trustBand: 'founder_verified',
+    status: 'active',
+    sourceType: 'founder_entered',
+    confidenceScore: '90',
+  },
+
+  // ── Gyro Bros ────────────────────────────────────────────────────────────────
+  {
+    _slug: 'gyro-bros-899-lunch',
+    _venueSlug: 'gyro-bros-midtown',
+    title: '$8.99 Gyro Lunch Special',
+    description: '$8.99 Gyro and side — available every day',
+    category: 'food_deal',
+    trustBand: 'founder_verified',
+    status: 'active',
+    sourceType: 'founder_entered',
+    confidenceScore: '90',
+  },
+
+  // ── Cypress Street Pint & Plate ───────────────────────────────────────────────
+  {
+    _slug: 'cypress-3-taco-monday',
+    _venueSlug: 'cypress-street-midtown',
+    title: '$3 Taco Monday',
+    description: '$3 Tacos every Monday',
+    category: 'cheap_eats',
+    trustBand: 'founder_verified',
+    status: 'active',
+    sourceType: 'founder_entered',
+    confidenceScore: '90',
+  },
+  {
+    _slug: 'cypress-3-beer',
+    _venueSlug: 'cypress-street-midtown',
+    title: '$3 Beer',
+    description: '$3 Select Beers — House IPA & House Pilsner',
+    category: 'drink_deal',
+    trustBand: 'founder_verified',
+    status: 'active',
+    sourceType: 'founder_entered',
+    confidenceScore: '90',
+  },
+  {
+    _slug: 'cypress-20-wine-pizza',
+    _venueSlug: 'cypress-street-midtown',
+    title: '$20 Bottle of Wine & Personal Pizza',
+    description: 'Bottle of wine and a personal pizza — Wednesdays',
+    category: 'special',
+    trustBand: 'founder_verified',
+    status: 'active',
+    sourceType: 'founder_entered',
+    confidenceScore: '90',
+  },
+
+  // ── Steamhouse Lounge ────────────────────────────────────────────────────────
+  {
+    _slug: 'steamhouse-20-snow-crab',
+    _venueSlug: 'steamhouse-lounge-midtown',
+    title: '$20 1 lb Snow Crab',
+    description: '1 lb Snow Crab — Mondays',
+    category: 'food_deal',
+    trustBand: 'founder_verified',
+    status: 'active',
+    sourceType: 'founder_entered',
+    confidenceScore: '90',
+  },
+  {
+    _slug: 'steamhouse-6-goombay',
+    _venueSlug: 'steamhouse-lounge-midtown',
+    title: '$6 Goombay Smash',
+    description: 'Goombay Smash cocktail — Mondays',
+    category: 'drink_deal',
+    trustBand: 'founder_verified',
+    status: 'active',
+    sourceType: 'founder_entered',
+    confidenceScore: '90',
+  },
+  {
+    _slug: 'steamhouse-taco-special',
+    _venueSlug: 'steamhouse-lounge-midtown',
+    title: 'Taco Special',
+    description: 'Taco Special — Tuesdays',
+    category: 'food_deal',
+    trustBand: 'founder_verified',
+    status: 'active',
+    sourceType: 'founder_entered',
+    confidenceScore: '90',
+  },
+  {
+    _slug: 'steamhouse-650-margarita',
+    _venueSlug: 'steamhouse-lounge-midtown',
+    title: '$6.50 Campo Bravo Margarita',
+    description: 'Campo Bravo Margarita — Tuesdays',
+    category: 'drink_deal',
+    trustBand: 'founder_verified',
+    status: 'active',
+    sourceType: 'founder_entered',
+    confidenceScore: '90',
+  },
+  {
+    _slug: 'steamhouse-15-raw-oysters',
+    _venueSlug: 'steamhouse-lounge-midtown',
+    title: '$15 Dozen Raw Oysters',
+    description: 'Dozen Raw Oysters — Wednesdays',
+    category: 'food_deal',
+    trustBand: 'founder_verified',
+    status: 'active',
+    sourceType: 'founder_entered',
+    confidenceScore: '90',
+  },
+  {
+    _slug: 'steamhouse-10-grilled-oysters',
+    _venueSlug: 'steamhouse-lounge-midtown',
+    title: '$10 ½ Dozen Char-Grilled Oysters',
+    description: '½ Dozen Char-Grilled Oysters — Wednesdays',
+    category: 'food_deal',
+    trustBand: 'founder_verified',
+    status: 'active',
+    sourceType: 'founder_entered',
+    confidenceScore: '90',
+  },
+  {
+    _slug: 'steamhouse-550-house-wine',
+    _venueSlug: 'steamhouse-lounge-midtown',
+    title: '$5.50 House Wine',
+    description: 'House Wine — Wednesdays',
+    category: 'drink_deal',
+    trustBand: 'founder_verified',
+    status: 'active',
+    sourceType: 'founder_entered',
+    confidenceScore: '90',
+  },
+];
 
 // ── Schedules ─────────────────────────────────────────────────────────────────
+// Days: 0=Sun, 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri, 6=Sat
 
 type ScheduleDef = {
   listingSlug: string;
@@ -126,11 +312,52 @@ type ScheduleDef = {
   timezone?: string;
 };
 
-const scheduleDefs: ScheduleDef[] = [];
+const ALL_DAYS = [0, 1, 2, 3, 4, 5, 6];
+
+const scheduleDefs: ScheduleDef[] = [
+  // Zoe's Tacos
+  { listingSlug: 'zoes-150-tacos',        days: [2, 5],    startTime: '11:00', endTime: '21:00' },
+  { listingSlug: 'zoes-899-burrito',       days: [3],       startTime: '11:00', endTime: '21:00' },
+  { listingSlug: 'zoes-599-quesadilla',    days: [4],       startTime: '11:00', endTime: '21:00' },
+  { listingSlug: 'zoes-799-torta',         days: [1],       startTime: '11:00', endTime: '21:00' },
+  // Moe's
+  { listingSlug: 'moes-699-burrito-bowl',  days: [1],       startTime: '10:00', endTime: '23:00' },
+  // Gyro Bros
+  { listingSlug: 'gyro-bros-899-lunch',    days: ALL_DAYS,  startTime: '11:00', endTime: '20:30' },
+  // Cypress Street
+  { listingSlug: 'cypress-3-taco-monday',  days: [1],       startTime: '11:00', endTime: '23:59' },
+  { listingSlug: 'cypress-3-beer',         days: ALL_DAYS,  startTime: '12:00', endTime: '23:59' },
+  { listingSlug: 'cypress-20-wine-pizza',  days: [3],       startTime: '13:00', endTime: '23:59' },
+  // Steamhouse Lounge
+  { listingSlug: 'steamhouse-20-snow-crab',      days: [1], startTime: '11:30', endTime: '22:00' },
+  { listingSlug: 'steamhouse-6-goombay',         days: [1], startTime: '11:30', endTime: '22:00' },
+  { listingSlug: 'steamhouse-taco-special',      days: [2], startTime: '11:30', endTime: '22:00' },
+  { listingSlug: 'steamhouse-650-margarita',     days: [2], startTime: '11:30', endTime: '22:00' },
+  { listingSlug: 'steamhouse-15-raw-oysters',    days: [3], startTime: '11:30', endTime: '22:00' },
+  { listingSlug: 'steamhouse-10-grilled-oysters',days: [3], startTime: '11:30', endTime: '22:00' },
+  { listingSlug: 'steamhouse-550-house-wine',    days: [3], startTime: '11:30', endTime: '22:00' },
+];
 
 // ── Tags ──────────────────────────────────────────────────────────────────────
 
-const tagDefs: Record<string, string[]> = {};
+const tagDefs: Record<string, string[]> = {
+  'zoes-150-tacos':               ['tacos', 'mexican', 'cheap_eats'],
+  'zoes-899-burrito':             ['burritos', 'mexican'],
+  'zoes-599-quesadilla':          ['quesadilla', 'mexican'],
+  'zoes-799-torta':               ['torta', 'mexican'],
+  'moes-699-burrito-bowl':        ['burritos', 'mexican', 'rewards'],
+  'gyro-bros-899-lunch':          ['gyro', 'mediterranean', 'lunch'],
+  'cypress-3-taco-monday':        ['tacos', 'happy_hour'],
+  'cypress-3-beer':               ['beer', 'happy_hour'],
+  'cypress-20-wine-pizza':        ['wine', 'pizza'],
+  'steamhouse-20-snow-crab':      ['seafood', 'crab'],
+  'steamhouse-6-goombay':         ['cocktails'],
+  'steamhouse-taco-special':      ['tacos'],
+  'steamhouse-650-margarita':     ['cocktails', 'margarita'],
+  'steamhouse-15-raw-oysters':    ['seafood', 'oysters'],
+  'steamhouse-10-grilled-oysters':['seafood', 'oysters'],
+  'steamhouse-550-house-wine':    ['wine'],
+};
 
 // ── Badge catalog ─────────────────────────────────────────────────────────────
 
