@@ -1,5 +1,22 @@
 import type { AdminQueueItem, ListingDetail, Profile, VenueDetail } from '@dealdrop/shared-types';
 
+const trustSummaryFor = (listing: {
+  trustBand: ListingDetail['trustBand'];
+  confidenceScore: number;
+  freshUntilAt: string;
+  recheckAfterAt: string;
+  proofCount: number;
+}): ListingDetail['trustSummary'] => ({
+  band: listing.trustBand,
+  explanation: 'Admin fixture trust summary.',
+  confidenceScore: listing.confidenceScore,
+  freshUntilAt: listing.freshUntilAt,
+  recheckAfterAt: listing.recheckAfterAt,
+  proofCount: listing.proofCount,
+  recentConfirmations: listing.proofCount,
+  disputeCount: listing.trustBand === 'needs_recheck' ? 1 : 0,
+});
+
 export const dashboardMetrics = [
   { label: 'Submission queue', value: '28 pending', note: '4 duplicate merge reviews waiting', tone: 'accent' },
   { label: 'Issue reports', value: '11 open', note: '2 are suppressing hot listings', tone: 'rose' },
@@ -57,6 +74,7 @@ export const listings: ListingDetail[] = [
     trustBand: 'founder_verified',
     freshnessText: 'Updated 42 mins ago',
     valueNote: 'Street tacos from $4.99 with rotating fillings.',
+    affordabilityLabel: 'Under $10',
     distanceMiles: 0.3,
     rating: 4.7,
     cuisine: 'Mexican',
@@ -70,9 +88,17 @@ export const listings: ListingDetail[] = [
     sourceNote: 'Founder-added from menu board and in-store confirmation.',
     offers: [{ id: 'off_1', title: 'Taco Tuesday Special', originalPrice: 9.99, dealPrice: 4.99, currency: 'USD' }],
     confidenceScore: 0.94,
+    lastUpdatedAt: '2026-04-14T21:18:00.000Z',
     freshUntilAt: '2026-04-15T03:00:00.000Z',
     recheckAfterAt: '2026-04-15T15:00:00.000Z',
     proofCount: 2,
+    trustSummary: trustSummaryFor({
+      trustBand: 'founder_verified',
+      confidenceScore: 0.94,
+      freshUntilAt: '2026-04-15T03:00:00.000Z',
+      recheckAfterAt: '2026-04-15T15:00:00.000Z',
+      proofCount: 2,
+    }),
   },
   {
     id: 'lst_slice_combo',
@@ -85,6 +111,7 @@ export const listings: ListingDetail[] = [
     trustBand: 'needs_recheck',
     freshnessText: 'Last verified yesterday',
     valueNote: 'Fast pickup option near Beltline traffic.',
+    affordabilityLabel: 'Under $10',
     distanceMiles: 1.2,
     rating: 4.5,
     cuisine: 'Italian',
@@ -98,9 +125,17 @@ export const listings: ListingDetail[] = [
     sourceNote: 'Recent conflict reports lowered confidence.',
     offers: [{ id: 'off_2', title: 'Slice + Drink', originalPrice: 8.5, dealPrice: 5, currency: 'USD' }],
     confidenceScore: 0.43,
+    lastUpdatedAt: '2026-04-13T19:20:00.000Z',
     freshUntilAt: '2026-04-14T08:00:00.000Z',
     recheckAfterAt: '2026-04-14T23:30:00.000Z',
     proofCount: 0,
+    trustSummary: trustSummaryFor({
+      trustBand: 'needs_recheck',
+      confidenceScore: 0.43,
+      freshUntilAt: '2026-04-14T08:00:00.000Z',
+      recheckAfterAt: '2026-04-14T23:30:00.000Z',
+      proofCount: 0,
+    }),
   },
   {
     id: 'lst_happy_hour_pitcher',
@@ -113,6 +148,7 @@ export const listings: ListingDetail[] = [
     trustBand: 'recently_updated',
     freshnessText: 'Recently updated today',
     valueNote: 'Popular after-work and student meetup stop.',
+    affordabilityLabel: 'Under $15',
     distanceMiles: 1.1,
     rating: 4.4,
     cuisine: 'Bar',
@@ -126,9 +162,17 @@ export const listings: ListingDetail[] = [
     sourceNote: 'Updated with moderator-attached photo proof.',
     offers: [{ id: 'off_3', title: 'House Lager Pitcher', originalPrice: 18, dealPrice: 9, currency: 'USD' }],
     confidenceScore: 0.69,
+    lastUpdatedAt: '2026-04-14T16:05:00.000Z',
     freshUntilAt: '2026-04-14T23:30:00.000Z',
     recheckAfterAt: '2026-04-15T06:00:00.000Z',
     proofCount: 1,
+    trustSummary: trustSummaryFor({
+      trustBand: 'recently_updated',
+      confidenceScore: 0.69,
+      freshUntilAt: '2026-04-14T23:30:00.000Z',
+      recheckAfterAt: '2026-04-15T06:00:00.000Z',
+      proofCount: 1,
+    }),
   },
 ];
 
