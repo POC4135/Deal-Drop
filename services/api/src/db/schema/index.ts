@@ -434,7 +434,7 @@ export const leaderboardSnapshots = pgTable(
   'leaderboard_snapshots',
   {
     id: varchar('id', { length: 64 }).primaryKey(),
-    window: leaderboardWindowEnum('window').notNull(),
+    window: leaderboardWindowEnum('leaderboard_window').notNull(),
     snapshotDate: timestamp('snapshot_date', { withTimezone: true }).notNull(),
     userId: varchar('user_id', { length: 64 })
       .notNull()

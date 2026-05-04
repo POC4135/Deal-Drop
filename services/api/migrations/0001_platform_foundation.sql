@@ -283,7 +283,7 @@ create table badges (
 
 create table leaderboard_snapshots (
   id varchar(64) primary key,
-  window leaderboard_window not null,
+  leaderboard_window leaderboard_window not null,
   snapshot_date timestamptz not null,
   user_id varchar(64) not null references users(id),
   rank integer not null,
@@ -292,7 +292,7 @@ create table leaderboard_snapshots (
   created_at timestamptz not null default now()
 );
 
-create index leaderboard_snapshots_idx on leaderboard_snapshots (window, snapshot_date desc, rank asc);
+create index leaderboard_snapshots_idx on leaderboard_snapshots (leaderboard_window, snapshot_date desc, rank asc);
 
 create table notification_preferences (
   user_id varchar(64) primary key references users(id),

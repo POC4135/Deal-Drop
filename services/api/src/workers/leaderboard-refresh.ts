@@ -27,7 +27,7 @@ export async function runLeaderboardRefresh(): Promise<number> {
     for (const row of result.rows) {
       await getPool().query(
         `
-          insert into leaderboard_snapshots (id, window, snapshot_date, user_id, rank, points, level_title)
+          insert into leaderboard_snapshots (id, leaderboard_window, snapshot_date, user_id, rank, points, level_title)
           values ($1, $2, date_trunc('day', now()), $3, $4, $5, $6)
         `,
         [`lbs_${ulid().toLowerCase()}`, window, row.user_id, row.rank, row.points, row.level_title],
