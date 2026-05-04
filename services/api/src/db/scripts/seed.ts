@@ -67,7 +67,7 @@ async function main() {
           $1,
           $2,
           $3,
-          lower(replace($3, ' ', '-')),
+          lower(replace($3::text, ' ', '-')),
           $4,
           $5,
           $6,
