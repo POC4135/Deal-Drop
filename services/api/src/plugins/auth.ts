@@ -22,7 +22,7 @@ export async function registerAuth(app: FastifyInstance): Promise<void> {
   const jwksUrl = env.SUPABASE_JWKS_URL ?? `${jwtIssuer}/.well-known/jwks.json`;
   const jwks = createRemoteJWKSet(new URL(jwksUrl));
 
-  app.decorateRequest('auth', null);
+  app.decorateRequest('auth', undefined as unknown as FastifyRequest['auth']);
 
   app.addHook('preHandler', async (request) => {
     const publicRoute = isPublicRoute(request.method, request.routeOptions.url ?? request.url);
