@@ -22,8 +22,9 @@ export async function runTrustProjector(): Promise<number> {
       [`cfs_${ulid().toLowerCase()}`, row.id, row.confidence_score, row.trust_band, row.visibility_state, row.fresh_until_at, row.recheck_after_at],
     );
   }
-  console.log(JSON.stringify({ worker: 'trust', snapshots: result.rowCount }));
-  return result.rowCount;
+  const snapshotCount = result.rowCount ?? result.rows.length;
+  console.log(JSON.stringify({ worker: 'trust', snapshots: snapshotCount }));
+  return snapshotCount;
 }
 
 runTrustProjector().catch((error) => {
