@@ -25,7 +25,7 @@ export async function registerAuth(app: FastifyInstance): Promise<void> {
   app.decorateRequest('auth', null);
 
   app.addHook('preHandler', async (request) => {
-    const publicRoute = isPublicRoute(request.method, request.routeOptions.url);
+    const publicRoute = isPublicRoute(request.method, request.routeOptions.url ?? request.url);
     if (env.USE_DEV_AUTH) {
       const headers = devHeadersSchema.parse(request.headers);
       if (!headers['x-dev-user-id'] && publicRoute) {
