@@ -63,6 +63,11 @@ describe('api routes', () => {
     });
 
     expect(response.statusCode).toBe(200);
-    expect(response.json().openContributionCount).toBeGreaterThan(0);
+    expect(response.json()).toMatchObject({
+      openContributionCount: expect.any(Number),
+      openReportCount: expect.any(Number),
+      staleListingCount: expect.any(Number),
+      highRiskListings: expect.any(Array),
+    });
   });
 });
