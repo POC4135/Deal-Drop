@@ -41,6 +41,8 @@ jobs:
 
       - run: pnpm install --no-frozen-lockfile
       - run: pnpm typecheck
+      - run: pnpm --filter @dealdrop/api db:migrate
+      - run: pnpm --filter @dealdrop/api db:seed
       - run: pnpm test
       - run: pnpm build
       - run: pnpm --filter @dealdrop/api db:migrate
