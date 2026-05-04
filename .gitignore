@@ -59,3 +59,8 @@ terraform.tfstate.backup
 *.tfstate.*
 crash.log
 infra/local/minio-data/
+
+# Environment variables
+.env
+.env.local
+.env.*.local

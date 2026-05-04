@@ -19,4 +19,13 @@ describe('migration sanity', () => {
     expect(migration).toContain('create table outbox_events');
     expect(migration).toContain('create table idempotency_keys');
   });
+
+  it('keeps app contract enums and durable notification tables in schema', () => {
+    expect(migration).toContain('merchant_confirmed');
+    expect(migration).toContain('report_expired');
+    expect(migration).toContain('marketing_announcements');
+    expect(migration).toContain('create table notifications');
+    expect(migration).toContain('create table device_registrations');
+    expect(migration).toContain('create table telemetry_events');
+  });
 });

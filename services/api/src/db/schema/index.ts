@@ -24,12 +24,19 @@ export const roleEnum = pgEnum('role', ['user', 'moderator', 'admin']);
 export const listingStatusEnum = pgEnum('listing_status', ['draft', 'active', 'stale', 'suppressed', 'archived']);
 export const trustBandEnum = pgEnum('trust_band', [
   'founder_verified',
+  'merchant_confirmed',
   'user_confirmed',
   'recently_updated',
   'needs_recheck',
+  'disputed',
 ]);
 export const visibilityStateEnum = pgEnum('visibility_state', ['visible', 'shadow_hidden', 'suppressed']);
-export const contributionTypeEnum = pgEnum('contribution_type', ['new_listing', 'listing_update', 'confirm_valid']);
+export const contributionTypeEnum = pgEnum('contribution_type', [
+  'new_listing',
+  'listing_update',
+  'confirm_valid',
+  'report_expired',
+]);
 export const contributionStatusEnum = pgEnum('contribution_status', [
   'submitted',
   'needs_proof',
@@ -49,6 +56,21 @@ export const reportStatusEnum = pgEnum('report_status', ['open', 'resolved']);
 export const ledgerStatusEnum = pgEnum('ledger_status', ['pending', 'finalized', 'reversed']);
 export const leaderboardWindowEnum = pgEnum('leaderboard_window', ['daily', 'weekly', 'all_time']);
 export const outboxStatusEnum = pgEnum('outbox_status', ['pending', 'published', 'failed']);
+export const platformTypeEnum = pgEnum('platform_type', ['ios', 'android', 'web', 'unknown']);
+export const notificationKindEnum = pgEnum('notification_kind', [
+  'contribution_resolved',
+  'points_finalized',
+  'trust_status_changed',
+  'listing_reported_stale',
+  'moderation_update',
+]);
+export const notificationDeliveryStatusEnum = pgEnum('notification_delivery_status', [
+  'queued',
+  'sent',
+  'delivered',
+  'failed',
+  'suppressed',
+]);
 
 export const users = pgTable(
   'users',
@@ -413,8 +435,107 @@ export const notificationPreferences = pgTable('notification_preferences', {
   contributionResolved: boolean('contribution_resolved').notNull().default(true),
   pointsFinalized: boolean('points_finalized').notNull().default(true),
   trustStatusChanged: boolean('trust_status_changed').notNull().default(true),
+  marketingAnnouncements: boolean('marketing_announcements').notNull().default(false),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });
+
+export const notifications = pgTable(
+  'notifications',
+  {
+    id: varchar('id', { length: 64 }).primaryKey(),
+    userId: varchar('user_id', { length: 64 })
+      .notNull()
+      .references(() => users.id),
+    kind: notificationKindEnum('kind').notNull(),
+    title: text('title').notNull(),
+    body: text('body').notNull(),
+    referenceType: varchar('reference_type', { length: 64 }),
+    referenceId: varchar('reference_id', { length: 64 }),
+    deepLink: text('deep_link'),
+    metadata: jsonb('metadata').notNull().default({}),
+    readAt: timestamp('read_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    notificationsUserCreatedIdx: index('notifications_user_created_idx').on(table.userId, table.createdAt),
+    notificationsUserReadIdx: index('notifications_user_read_idx').on(table.userId, table.readAt),
+  }),
+);
+
+export const deviceRegistrations = pgTable(
+  'device_registrations',
+  {
+    id: varchar('id', { length: 64 }).primaryKey(),
+    userId: varchar('user_id', { length: 64 })
+      .notNull()
+      .references(() => users.id),
+    platform: platformTypeEnum('platform').notNull(),
+    deviceIdentifier: varchar('device_identifier', { length: 160 }).notNull(),
+    pushToken: text('push_token').notNull(),
+    appVersion: varchar('app_version', { length: 64 }),
+    lastSeenAt: timestamp('last_seen_at', { withTimezone: true }).notNull().defaultNow(),
+    disabledAt: timestamp('disabled_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    deviceRegistrationsUserDeviceIdx: uniqueIndex('device_registrations_user_device_idx').on(
+      table.userId,
+      table.deviceIdentifier,
+    ),
+    deviceRegistrationsUserDisabledIdx: index('device_registrations_user_disabled_idx').on(
+      table.userId,
+      table.disabledAt,
+    ),
+  }),
+);
+
+export const notificationDeliveries = pgTable(
+  'notification_deliveries',
+  {
+    id: varchar('id', { length: 64 }).primaryKey(),
+    notificationId: varchar('notification_id', { length: 64 })
+      .notNull()
+      .references(() => notifications.id),
+    deviceId: varchar('device_id', { length: 64 })
+      .notNull()
+      .references(() => deviceRegistrations.id),
+    channel: varchar('channel', { length: 64 }).notNull(),
+    status: notificationDeliveryStatusEnum('status').notNull().default('queued'),
+    providerMessageId: varchar('provider_message_id', { length: 255 }),
+    attemptedAt: timestamp('attempted_at', { withTimezone: true }),
+    deliveredAt: timestamp('delivered_at', { withTimezone: true }),
+    failedAt: timestamp('failed_at', { withTimezone: true }),
+    failureReason: text('failure_reason'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    notificationDeliveriesNotificationIdx: index('notification_deliveries_notification_idx').on(table.notificationId),
+    notificationDeliveriesDeviceIdx: index('notification_deliveries_device_idx').on(table.deviceId),
+    notificationDeliveriesStatusIdx: index('notification_deliveries_status_idx').on(table.status, table.createdAt),
+  }),
+);
+
+export const telemetryEvents = pgTable(
+  'telemetry_events',
+  {
+    id: varchar('id', { length: 64 }).primaryKey(),
+    userId: varchar('user_id', { length: 64 }).references(() => users.id),
+    deviceId: varchar('device_id', { length: 64 }).references(() => deviceRegistrations.id),
+    sessionId: varchar('session_id', { length: 160 }),
+    eventName: varchar('event_name', { length: 160 }).notNull(),
+    eventPayload: jsonb('event_payload').notNull().default({}),
+    appVersion: varchar('app_version', { length: 64 }),
+    platform: platformTypeEnum('platform'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    telemetryEventsCreatedIdx: index('telemetry_events_created_idx').on(table.createdAt),
+    telemetryEventsNameCreatedIdx: index('telemetry_events_name_created_idx').on(table.eventName, table.createdAt),
+    telemetryEventsUserCreatedIdx: index('telemetry_events_user_created_idx').on(table.userId, table.createdAt),
+  }),
+);
 
 export const auditLogs = pgTable('audit_logs', {
   id: varchar('id', { length: 64 }).primaryKey(),

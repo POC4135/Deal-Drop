@@ -4,15 +4,18 @@ create extension if not exists pgcrypto;
 
 create type role as enum ('user', 'moderator', 'admin');
 create type listing_status as enum ('draft', 'active', 'stale', 'suppressed', 'archived');
-create type trust_band as enum ('founder_verified', 'user_confirmed', 'recently_updated', 'needs_recheck');
+create type trust_band as enum ('founder_verified', 'merchant_confirmed', 'user_confirmed', 'recently_updated', 'needs_recheck', 'disputed');
 create type visibility_state as enum ('visible', 'shadow_hidden', 'suppressed');
-create type contribution_type as enum ('new_listing', 'listing_update', 'confirm_valid');
+create type contribution_type as enum ('new_listing', 'listing_update', 'confirm_valid', 'report_expired');
 create type contribution_status as enum ('submitted', 'needs_proof', 'under_review', 'approved', 'rejected', 'merged');
 create type moderation_decision as enum ('approve', 'reject', 'request_proof', 'merge_duplicate', 'snooze');
 create type report_status as enum ('open', 'resolved');
 create type ledger_status as enum ('pending', 'finalized', 'reversed');
 create type leaderboard_window as enum ('daily', 'weekly', 'all_time');
 create type outbox_status as enum ('pending', 'published', 'failed');
+create type platform_type as enum ('ios', 'android', 'web', 'unknown');
+create type notification_kind as enum ('contribution_resolved', 'points_finalized', 'trust_status_changed', 'listing_reported_stale', 'moderation_update');
+create type notification_delivery_status as enum ('queued', 'sent', 'delivered', 'failed', 'suppressed');
 
 create table users (
   id varchar(64) primary key,
@@ -296,8 +299,77 @@ create table notification_preferences (
   contribution_resolved boolean not null default true,
   points_finalized boolean not null default true,
   trust_status_changed boolean not null default true,
+  marketing_announcements boolean not null default false,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table notifications (
+  id varchar(64) primary key,
+  user_id varchar(64) not null references users(id),
+  kind notification_kind not null,
+  title text not null,
+  body text not null,
+  reference_type varchar(64),
+  reference_id varchar(64),
+  deep_link text,
+  metadata jsonb not null default '{}'::jsonb,
+  read_at timestamptz,
   created_at timestamptz not null default now()
 );
+
+create index notifications_user_created_idx on notifications (user_id, created_at desc);
+create index notifications_user_read_idx on notifications (user_id, read_at);
+
+create table device_registrations (
+  id varchar(64) primary key,
+  user_id varchar(64) not null references users(id),
+  platform platform_type not null,
+  device_identifier varchar(160) not null,
+  push_token text not null,
+  app_version varchar(64),
+  last_seen_at timestamptz not null default now(),
+  disabled_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create unique index device_registrations_user_device_idx on device_registrations (user_id, device_identifier);
+create index device_registrations_user_disabled_idx on device_registrations (user_id, disabled_at);
+
+create table notification_deliveries (
+  id varchar(64) primary key,
+  notification_id varchar(64) not null references notifications(id),
+  device_id varchar(64) not null references device_registrations(id),
+  channel varchar(64) not null,
+  status notification_delivery_status not null default 'queued',
+  provider_message_id varchar(255),
+  attempted_at timestamptz,
+  delivered_at timestamptz,
+  failed_at timestamptz,
+  failure_reason text,
+  created_at timestamptz not null default now()
+);
+
+create index notification_deliveries_notification_idx on notification_deliveries (notification_id);
+create index notification_deliveries_device_idx on notification_deliveries (device_id);
+create index notification_deliveries_status_idx on notification_deliveries (status, created_at);
+
+create table telemetry_events (
+  id varchar(64) primary key,
+  user_id varchar(64) references users(id),
+  device_id varchar(64) references device_registrations(id),
+  session_id varchar(160),
+  event_name varchar(160) not null,
+  event_payload jsonb not null default '{}'::jsonb,
+  app_version varchar(64),
+  platform platform_type,
+  created_at timestamptz not null default now()
+);
+
+create index telemetry_events_created_idx on telemetry_events (created_at);
+create index telemetry_events_name_created_idx on telemetry_events (event_name, created_at);
+create index telemetry_events_user_created_idx on telemetry_events (user_id, created_at);
 
 create table audit_logs (
   id varchar(64) not null,

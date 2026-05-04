@@ -1,3 +1,5 @@
+import 'dotenv/config';
+
 import { parseRuntimeEnv } from '@dealdrop/config';
 
 import { createApp } from './app/create-app.js';
