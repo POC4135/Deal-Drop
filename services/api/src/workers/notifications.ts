@@ -8,7 +8,7 @@ export async function runNotificationDispatch(): Promise<number> {
     device_id: string;
   }>(`
     insert into notification_deliveries (id, notification_id, device_id, channel, status, attempted_at)
-    select 'ndl_' || replace(gen_random_uuid()::text, '-', ''), n.id, d.id, 'push', 'queued', now()
+    select 'ndl_' || replace(gen_random_uuid()::text, '-', ''), n.id, d.id, 'push', 'queued'::notification_delivery_status, now()
     from notifications n
     join device_registrations d on d.user_id = n.user_id and d.disabled_at is null and d.push_token is not null
     left join notification_preferences p on p.user_id = n.user_id
@@ -29,8 +29,8 @@ export async function runNotificationDispatch(): Promise<number> {
   await getPool().query(`
     update notification_deliveries
     set status = case
-      when $1::text is not null or $2::text is not null then 'sent'
-      else 'suppressed'
+      when $1::text is not null or $2::text is not null then 'sent'::notification_delivery_status
+      else 'suppressed'::notification_delivery_status
     end,
     attempted_at = coalesce(attempted_at, now()),
     delivered_at = case when $1::text is not null or $2::text is not null then now() else delivered_at end,
