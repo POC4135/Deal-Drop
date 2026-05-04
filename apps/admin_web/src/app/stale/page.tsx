@@ -1,8 +1,9 @@
 import { AdminShell } from '../../components/admin-shell';
 import { TableCard } from '../../components/table-card';
-import { staleQueue } from '../../lib/mock-data';
+import { adminApi } from '../../lib/api';
 
-export default function StalePage() {
+export default async function StalePage() {
+  const staleQueue = await adminApi.staleQueue();
   return (
     <AdminShell eyebrow="Queues" title="Stale listings">
       <TableCard

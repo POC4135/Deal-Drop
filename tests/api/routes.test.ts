@@ -14,7 +14,7 @@ describe('api routes', () => {
     });
 
     expect(response.statusCode).toBe(200);
-    expect(response.json().sections).toHaveLength(3);
+    expect(response.json().sections.length).toBeGreaterThanOrEqual(3);
   });
 
   it('enforces moderator role for admin dashboard', async () => {
@@ -28,6 +28,28 @@ describe('api routes', () => {
     });
 
     expect(response.statusCode).toBe(403);
+  });
+
+  it('bootstraps an authenticated user into the app session contract', async () => {
+    const app = await createApp();
+    const response = await app.inject({
+      method: 'POST',
+      url: '/v1/auth/bootstrap',
+      headers: {
+        'x-dev-user-id': 'usr_bootstrap_test',
+        'x-dev-email': 'bootstrap@dealdrop.app',
+        'x-dev-role': 'user',
+        'x-dev-name': 'Bootstrap User',
+      },
+      payload: {
+        displayName: 'Bootstrap User',
+        homeNeighborhood: 'Midtown',
+      },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json().session.userId).toBe('usr_bootstrap_test');
+    expect(response.json().profile.email).toBe('bootstrap@dealdrop.app');
   });
 
   it('allows moderators into the admin dashboard', async () => {

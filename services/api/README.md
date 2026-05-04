@@ -18,29 +18,27 @@ Fastify modular monolith for the DealDrop platform foundation.
 ## Runtime shape
 
 - Fastify HTTP layer
-- Drizzle schema plus SQL migration in `migrations/0001_platform_foundation.sql`
-- in-memory seed-backed service layer for local contract flow today
-- Aurora/PostGIS, Redis, S3, EventBridge, and Cognito infrastructure assumptions baked into config and scripts
+- Drizzle schema plus additive SQL migrations in `migrations/`
+- selectable platform backend: `PLATFORM_BACKEND=seed` for local contract tests, `PLATFORM_BACKEND=postgres` for Supabase Postgres
+- Supabase Auth JWT verification, Supabase Storage proof-upload slots, Postgres outbox workers, and Render-oriented deployment envs
 
-## Local auth note
+## Auth note
 
-The current local seed auth flow is only intended to validate mobile-to-API integration while the real identity layer is pending.
+Production auth is Supabase Auth. Mobile/admin clients authenticate with Supabase and send `Authorization: Bearer <access token>` to the API. The API verifies the Supabase JWT and reads DealDrop roles from the `users` table.
+
+The local seed auth flow is still available only when `USE_DEV_AUTH=true`.
 
 - `alex@dealdrop.app` / `dealdrop123`
 - `maya@dealdrop.app` / `dealdrop123`
 - `jon@dealdrop.app` / `dealdrop123`
 - `sam@dealdrop.app` / `dealdrop123`
 
-Production auth is still pending on Cognito-backed JWT validation and should not reuse this local seed mechanism.
+## Backend work still pending for production hardening
 
-## Backend work still pending for production
-
-- replace the seed-backed platform service with real repositories over PostgreSQL / PostGIS
-- wire real Cognito JWT verification instead of `x-dev-*` auth headers
-- replace local proof-upload placeholders with real S3 upload finalize flows
-- validate Redis, outbox relay, EventBridge, SQS, DLQs, and workers against real AWS infrastructure
-- persist telemetry and notification delivery state in production-grade storage
-- wire the admin web shell to live admin APIs instead of mock data
+- validate all Postgres repository paths against the live Supabase staging database
+- replace the signed-upload placeholder URL with a service-role Supabase Storage signed-upload call
+- connect notification worker credentials to real FCM/APNs projects
+- add rate limiting and abuse controls around auth-adjacent and contribution endpoints
 - run the Node.js, worker, and migration test suites once `node`/`pnpm` are installed in the workspace
 
 ## Useful commands

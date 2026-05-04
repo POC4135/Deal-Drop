@@ -1,18 +1,10 @@
-import { notFound } from 'next/navigation';
-
 import { AdminShell } from '../../../components/admin-shell';
-import { listings } from '../../../lib/mock-data';
-
-export function generateStaticParams() {
-  return listings.map((listing) => ({ listingId: listing.id }));
-}
+import { adminApi } from '../../../lib/api';
 
 export default async function ListingDetailPage({ params }: { params: Promise<{ listingId: string }> }) {
   const { listingId } = await params;
-  const listing = listings.find((candidate) => candidate.id === listingId);
-  if (!listing) {
-    notFound();
-  }
+  const listing = (await adminApi.listings()).find((candidate) => candidate.id === listingId);
+  if (!listing) return <AdminShell eyebrow="Catalog" title="Listing not found"><section className="panel p-8">No live listing exists for this id.</section></AdminShell>;
 
   return (
     <AdminShell eyebrow="Catalog" title={listing.title}>

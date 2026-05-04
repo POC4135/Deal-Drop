@@ -1,4 +1,4 @@
-import { readFile } from 'node:fs/promises';
+import { readdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import { Client } from 'pg';
@@ -7,13 +7,19 @@ import { parseRuntimeEnv } from '@dealdrop/config';
 
 async function main() {
   const env = parseRuntimeEnv(process.env);
-  const filePath = join(process.cwd(), 'migrations', '0001_platform_foundation.sql');
-  const sql = await readFile(filePath, 'utf8');
+  const migrationsDir = join(process.cwd(), 'migrations');
+  const migrationFiles = (await readdir(migrationsDir)).filter((file) => file.endsWith('.sql')).sort();
   const client = new Client({ connectionString: env.DATABASE_URL });
   await client.connect();
-  await client.query(sql);
-  await client.end();
-  console.log('Applied migration 0001_platform_foundation.sql');
+  try {
+    for (const migrationFile of migrationFiles) {
+      const sql = await readFile(join(migrationsDir, migrationFile), 'utf8');
+      await client.query(sql);
+      console.log(`Applied migration ${migrationFile}`);
+    }
+  } finally {
+    await client.end();
+  }
 }
 
 main().catch((error) => {

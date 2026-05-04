@@ -15,19 +15,22 @@ import 'package:dealdropapp/src/core/services/local_store.dart';
 
 class FakeDealDropRepository extends DealDropRepository {
   FakeDealDropRepository(SharedPreferences preferences)
-      : super(
-          apiClient: DealDropApiClient(
+    : super(
+        apiClient: DealDropApiClient(
+          config: AppConfig.fromEnvironment(),
+          sessionReader: () async => null,
+          accessTokenReader: () async => null,
+        ),
+        localStore: LocalStore(preferences),
+        analytics: AnalyticsService(
+          DealDropApiClient(
             config: AppConfig.fromEnvironment(),
             sessionReader: () async => null,
+            accessTokenReader: () async => null,
           ),
-          localStore: LocalStore(preferences),
-          analytics: AnalyticsService(
-            DealDropApiClient(
-              config: AppConfig.fromEnvironment(),
-              sessionReader: () async => null,
-            ),
-          ),
-        );
+        ),
+        config: AppConfig.fromEnvironment(),
+      );
 
   @override
   AuthSessionModel? loadSession() => null;
@@ -73,17 +76,25 @@ class FakeDealDropRepository extends DealDropRepository {
                   'originalPrice': 8.99,
                   'dealPrice': 4.99,
                   'currency': 'USD',
-                }
+                },
               ],
-              'freshUntilAt': DateTime.now().add(const Duration(hours: 6)).toIso8601String(),
-              'recheckAfterAt': DateTime.now().add(const Duration(hours: 12)).toIso8601String(),
+              'freshUntilAt': DateTime.now()
+                  .add(const Duration(hours: 6))
+                  .toIso8601String(),
+              'recheckAfterAt': DateTime.now()
+                  .add(const Duration(hours: 12))
+                  .toIso8601String(),
               'proofCount': 1,
               'trustSummary': {
                 'band': 'founder_verified',
                 'explanation': 'Verified directly by DealDrop.',
                 'confidenceScore': 0.94,
-                'freshUntilAt': DateTime.now().add(const Duration(hours: 6)).toIso8601String(),
-                'recheckAfterAt': DateTime.now().add(const Duration(hours: 12)).toIso8601String(),
+                'freshUntilAt': DateTime.now()
+                    .add(const Duration(hours: 6))
+                    .toIso8601String(),
+                'recheckAfterAt': DateTime.now()
+                    .add(const Duration(hours: 12))
+                    .toIso8601String(),
                 'proofCount': 1,
                 'recentConfirmations': 2,
                 'disputeCount': 0,
@@ -127,7 +138,9 @@ void main() {
       ProviderScope(
         overrides: [
           sharedPreferencesProvider.overrideWithValue(preferences),
-          repositoryProvider.overrideWithValue(FakeDealDropRepository(preferences)),
+          repositoryProvider.overrideWithValue(
+            FakeDealDropRepository(preferences),
+          ),
         ],
         child: const DealDropApp(),
       ),
@@ -135,7 +148,9 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('guest can enter the deals shell from the welcome screen', (tester) async {
+  testWidgets('guest can enter the deals shell from the welcome screen', (
+    tester,
+  ) async {
     await pumpApp(tester);
 
     expect(find.text('Continue as guest'), findsOneWidget);

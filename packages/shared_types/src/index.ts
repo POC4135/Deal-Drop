@@ -358,6 +358,12 @@ export const authSessionSchema = z.object({
 });
 export type AuthSession = z.infer<typeof authSessionSchema>;
 
+export const authBootstrapSchema = z.object({
+  displayName: z.string().min(2).optional(),
+  homeNeighborhood: z.string().default('Midtown'),
+});
+export type AuthBootstrap = z.infer<typeof authBootstrapSchema>;
+
 export const authResponseSchema = z.object({
   session: authSessionSchema,
   profile: profileSchema,

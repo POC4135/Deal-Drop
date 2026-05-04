@@ -2,11 +2,11 @@ import { AdminShell } from '../../components/admin-shell';
 
 export default function LoginPage() {
   return (
-    <AdminShell eyebrow="Auth" title="Operator login shell">
+    <AdminShell eyebrow="Auth" title="Operator login">
       <section className="panel mx-auto max-w-xl p-8">
         <p className="text-sm leading-6 text-[var(--body)]">
-          Production auth is backed by AWS Cognito groups. This shell preserves the intended admin flow while local
-          development can continue with dev claims.
+          Production auth is backed by Supabase sessions and DealDrop database roles. The current admin bridge uses a
+          server-side API token when configured, while local development can continue with dev claims.
         </p>
         <form className="mt-8 space-y-4">
           {['Email address', 'Password'].map((label) => (

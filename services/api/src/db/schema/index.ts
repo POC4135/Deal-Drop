@@ -56,7 +56,7 @@ export const reportStatusEnum = pgEnum('report_status', ['open', 'resolved']);
 export const ledgerStatusEnum = pgEnum('ledger_status', ['pending', 'finalized', 'reversed']);
 export const leaderboardWindowEnum = pgEnum('leaderboard_window', ['daily', 'weekly', 'all_time']);
 export const outboxStatusEnum = pgEnum('outbox_status', ['pending', 'published', 'failed']);
-export const platformTypeEnum = pgEnum('platform_type', ['ios', 'android', 'web', 'unknown']);
+export const platformTypeEnum = pgEnum('platform_type', ['ios', 'android', 'web', 'macos', 'windows', 'linux']);
 export const notificationKindEnum = pgEnum('notification_kind', [
   'contribution_resolved',
   'points_finalized',
@@ -226,6 +226,25 @@ export const listingTags = pgTable(
   }),
 );
 
+export const listingOffers = pgTable(
+  'listing_offers',
+  {
+    id: varchar('id', { length: 64 }).primaryKey(),
+    listingId: varchar('listing_id', { length: 64 })
+      .notNull()
+      .references(() => listings.id),
+    title: varchar('title', { length: 255 }).notNull(),
+    originalPrice: doublePrecision('original_price').notNull(),
+    dealPrice: doublePrecision('deal_price').notNull(),
+    currency: varchar('currency', { length: 8 }).notNull().default('USD'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    listingOfferIdx: index('listing_offers_listing_idx').on(table.listingId, table.dealPrice),
+  }),
+);
+
 export const favorites = pgTable(
   'favorites',
   {
@@ -277,10 +296,12 @@ export const contributionProofs = pgTable(
   {
     id: varchar('id', { length: 64 }).primaryKey(),
     contributionId: varchar('contribution_id', { length: 64 })
-      .notNull()
       .references(() => contributions.id),
     assetKey: text('asset_key').notNull(),
     contentType: varchar('content_type', { length: 120 }).notNull(),
+    uploadUrl: text('upload_url'),
+    status: varchar('status', { length: 32 }).notNull().default('pending_upload'),
+    metadata: jsonb('metadata').notNull().default({}),
     uploadedAt: timestamp('uploaded_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => ({
@@ -472,7 +493,7 @@ export const deviceRegistrations = pgTable(
       .references(() => users.id),
     platform: platformTypeEnum('platform').notNull(),
     deviceIdentifier: varchar('device_identifier', { length: 160 }).notNull(),
-    pushToken: text('push_token').notNull(),
+    pushToken: text('push_token'),
     appVersion: varchar('app_version', { length: 64 }),
     lastSeenAt: timestamp('last_seen_at', { withTimezone: true }).notNull().defaultNow(),
     disabledAt: timestamp('disabled_at', { withTimezone: true }),

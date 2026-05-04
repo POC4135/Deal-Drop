@@ -12,29 +12,33 @@ class ApiException implements Exception {
   final int? statusCode;
 
   @override
-  String toString() => 'ApiException(statusCode: $statusCode, message: $message)';
+  String toString() =>
+      'ApiException(statusCode: $statusCode, message: $message)';
 }
 
 class DealDropApiClient {
   DealDropApiClient({
     required AppConfig config,
     required Future<AuthSessionModel?> Function() sessionReader,
-  })  : _sessionReader = sessionReader,
-        _dio = Dio(
-          BaseOptions(
-            baseUrl: config.apiBaseUrl,
-            connectTimeout: const Duration(seconds: 8),
-            receiveTimeout: const Duration(seconds: 12),
-            sendTimeout: const Duration(seconds: 12),
-            headers: const {
-              'Accept': 'application/json',
-              'Content-Type': 'application/json',
-            },
-          ),
-        );
+    required Future<String?> Function() accessTokenReader,
+  }) : _sessionReader = sessionReader,
+       _accessTokenReader = accessTokenReader,
+       _dio = Dio(
+         BaseOptions(
+           baseUrl: config.apiBaseUrl,
+           connectTimeout: const Duration(seconds: 8),
+           receiveTimeout: const Duration(seconds: 12),
+           sendTimeout: const Duration(seconds: 12),
+           headers: const {
+             'Accept': 'application/json',
+             'Content-Type': 'application/json',
+           },
+         ),
+       );
 
   final Dio _dio;
   final Future<AuthSessionModel?> Function() _sessionReader;
+  final Future<String?> Function() _accessTokenReader;
   final Random _random = Random();
 
   Future<Map<String, dynamic>> getJson(
@@ -44,10 +48,10 @@ class DealDropApiClient {
   }) async {
     final response = await _request<Map<String, dynamic>>(
       () async => _dio.get<Map<String, dynamic>>(
-            path,
-            queryParameters: queryParameters,
-            options: await _options(authenticated: authenticated),
-          ),
+        path,
+        queryParameters: queryParameters,
+        options: await _options(authenticated: authenticated),
+      ),
     );
     return response.data ?? <String, dynamic>{};
   }
@@ -59,10 +63,10 @@ class DealDropApiClient {
   }) async {
     final response = await _request<List<dynamic>>(
       () async => _dio.get<List<dynamic>>(
-            path,
-            queryParameters: queryParameters,
-            options: await _options(authenticated: authenticated),
-          ),
+        path,
+        queryParameters: queryParameters,
+        options: await _options(authenticated: authenticated),
+      ),
     );
     return response.data ?? const [];
   }
@@ -76,11 +80,14 @@ class DealDropApiClient {
   }) async {
     final response = await _request<Map<String, dynamic>>(
       () async => _dio.post<Map<String, dynamic>>(
-            path,
-            data: body,
-            queryParameters: queryParameters,
-            options: await _options(authenticated: authenticated, idempotent: idempotent),
-          ),
+        path,
+        data: body,
+        queryParameters: queryParameters,
+        options: await _options(
+          authenticated: authenticated,
+          idempotent: idempotent,
+        ),
+      ),
     );
     return response.data ?? <String, dynamic>{};
   }
@@ -93,10 +100,13 @@ class DealDropApiClient {
   }) async {
     await _request<void>(
       () async => _dio.post<void>(
-            path,
-            data: body,
-            options: await _options(authenticated: authenticated, idempotent: idempotent),
-          ),
+        path,
+        data: body,
+        options: await _options(
+          authenticated: authenticated,
+          idempotent: idempotent,
+        ),
+      ),
     );
   }
 
@@ -107,10 +117,10 @@ class DealDropApiClient {
   }) async {
     final response = await _request<Map<String, dynamic>>(
       () async => _dio.put<Map<String, dynamic>>(
-            path,
-            data: body,
-            options: await _options(authenticated: authenticated),
-          ),
+        path,
+        data: body,
+        options: await _options(authenticated: authenticated),
+      ),
     );
     return response.data ?? <String, dynamic>{};
   }
@@ -122,14 +132,16 @@ class DealDropApiClient {
   }) async {
     await _request<void>(
       () async => _dio.delete<void>(
-            path,
-            data: body,
-            options: await _options(authenticated: authenticated),
-          ),
+        path,
+        data: body,
+        options: await _options(authenticated: authenticated),
+      ),
     );
   }
 
-  Future<Response<T>> _request<T>(Future<Response<T>> Function() operation) async {
+  Future<Response<T>> _request<T>(
+    Future<Response<T>> Function() operation,
+  ) async {
     try {
       return await operation();
     } on DioException catch (error) {
@@ -149,6 +161,14 @@ class DealDropApiClient {
   }) async {
     final headers = <String, dynamic>{};
     if (authenticated) {
+      final accessToken = await _accessTokenReader();
+      if (accessToken != null && accessToken.isNotEmpty) {
+        headers['Authorization'] = 'Bearer $accessToken';
+        if (idempotent) {
+          headers['Idempotency-Key'] = _idempotencyKey();
+        }
+        return Options(headers: headers);
+      }
       final session = await _sessionReader();
       if (session == null) {
         throw const ApiException('Sign in is required.', statusCode: 401);
@@ -176,7 +196,9 @@ class DealDropApiClient {
   String _extractErrorMessage(DioException error) {
     final data = error.response?.data;
     if (data is Map<String, dynamic>) {
-      return (data['message'] as String?) ?? (data['error'] as String?) ?? 'Request failed.';
+      return (data['message'] as String?) ??
+          (data['error'] as String?) ??
+          'Request failed.';
     }
     return error.message ?? 'Request failed.';
   }

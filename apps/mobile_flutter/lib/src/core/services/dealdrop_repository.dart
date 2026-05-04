@@ -1,6 +1,9 @@
+import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
+
 import '../models/app_models.dart';
 import 'analytics_service.dart';
 import 'api_client.dart';
+import 'app_config.dart';
 import 'local_store.dart';
 
 class SubmissionOutcome {
@@ -27,22 +30,27 @@ class DealDropRepository {
     required DealDropApiClient apiClient,
     required LocalStore localStore,
     required AnalyticsService analytics,
+    required AppConfig config,
   }) : _apiClient = apiClient,
        _localStore = localStore,
-       _analytics = analytics;
+       _analytics = analytics,
+       _config = config;
 
   final DealDropApiClient _apiClient;
   final LocalStore _localStore;
   final AnalyticsService _analytics;
+  final AppConfig _config;
 
   Future<AuthPayload> signIn({
     required String email,
     required String password,
   }) async {
-    final response = await _apiClient.postJson(
-      '/v1/auth/sign-in',
-      body: {'email': email, 'password': password},
-    );
+    final response = _config.supabaseConfigured
+        ? await _signInWithSupabase(email: email, password: password)
+        : await _apiClient.postJson(
+            '/v1/auth/sign-in',
+            body: {'email': email, 'password': password},
+          );
     final auth = AuthPayload.fromJson(response);
     await _localStore.clearCachedData();
     await _localStore.saveSession(auth.session);
@@ -61,15 +69,22 @@ class DealDropRepository {
     required String displayName,
     required String homeNeighborhood,
   }) async {
-    final response = await _apiClient.postJson(
-      '/v1/auth/sign-up',
-      body: {
-        'email': email,
-        'password': password,
-        'displayName': displayName,
-        'homeNeighborhood': homeNeighborhood,
-      },
-    );
+    final response = _config.supabaseConfigured
+        ? await _signUpWithSupabase(
+            email: email,
+            password: password,
+            displayName: displayName,
+            homeNeighborhood: homeNeighborhood,
+          )
+        : await _apiClient.postJson(
+            '/v1/auth/sign-up',
+            body: {
+              'email': email,
+              'password': password,
+              'displayName': displayName,
+              'homeNeighborhood': homeNeighborhood,
+            },
+          );
     final auth = AuthPayload.fromJson(response);
     await _localStore.clearCachedData();
     await _localStore.saveSession(auth.session);
@@ -85,9 +100,54 @@ class DealDropRepository {
   AuthSessionModel? loadSession() => _localStore.loadSession();
 
   Future<void> signOut() async {
+    if (_config.supabaseConfigured) {
+      await supabase.Supabase.instance.client.auth.signOut();
+    }
     await _localStore.clearSession();
     await _localStore.clearCachedData();
     await _analytics.track('auth_sign_out', screen: 'profile');
+  }
+
+  Future<Map<String, dynamic>> _signInWithSupabase({
+    required String email,
+    required String password,
+  }) async {
+    final response = await supabase.Supabase.instance.client.auth
+        .signInWithPassword(email: email, password: password);
+    if (response.session == null) {
+      throw const ApiException(
+        'Email confirmation is required before signing in.',
+        statusCode: 401,
+      );
+    }
+    return _apiClient.postJson('/v1/auth/bootstrap', authenticated: true);
+  }
+
+  Future<Map<String, dynamic>> _signUpWithSupabase({
+    required String email,
+    required String password,
+    required String displayName,
+    required String homeNeighborhood,
+  }) async {
+    final response = await supabase.Supabase.instance.client.auth.signUp(
+      email: email,
+      password: password,
+      data: {
+        'display_name': displayName,
+        'home_neighborhood': homeNeighborhood,
+      },
+    );
+    if (response.session == null) {
+      throw const ApiException(
+        'Check your email to confirm your account before signing in.',
+        statusCode: 401,
+      );
+    }
+    return _apiClient.postJson(
+      '/v1/auth/bootstrap',
+      authenticated: true,
+      body: {'displayName': displayName, 'homeNeighborhood': homeNeighborhood},
+    );
   }
 
   bool get isAuthenticated => _localStore.loadSession() != null;

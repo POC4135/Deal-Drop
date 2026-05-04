@@ -15,7 +15,7 @@ const confirmBodySchema = z.object({
 export async function registerListingRoutes(app: FastifyInstance, platform: DealDropPlatform): Promise<void> {
   app.get('/v1/listings/:listingId', async (request, reply) => {
     const { listingId } = paramsSchema.parse(request.params);
-    const listing = platform.getListingDetail(listingId, request.auth.userId);
+    const listing = await platform.getListingDetail(listingId, request.auth.userId);
     if (!listing) {
       return reply.code(404).send({ error: 'not_found', requestId: request.requestId });
     }
@@ -24,7 +24,7 @@ export async function registerListingRoutes(app: FastifyInstance, platform: Deal
 
   app.get('/v1/venues/:venueId', async (request, reply) => {
     const { venueId } = paramsSchema.parse(request.params);
-    const venue = platform.getVenueDetail(venueId);
+    const venue = await platform.getVenueDetail(venueId);
     if (!venue) {
       return reply.code(404).send({ error: 'not_found', requestId: request.requestId });
     }

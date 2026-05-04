@@ -10,7 +10,7 @@ export async function registerNotificationRoutes(app: FastifyInstance, platform:
 
   app.post('/v1/notifications/:notificationId/read', async (request, reply) => {
     const { notificationId } = z.object({ notificationId: z.string() }).parse(request.params);
-    const notification = platform.markNotificationRead(request.auth.userId, notificationId);
+    const notification = await platform.markNotificationRead(request.auth.userId, notificationId);
     if (!notification) {
       return reply.code(404).send({ error: 'not_found', requestId: request.requestId });
     }
@@ -31,7 +31,7 @@ export async function registerNotificationRoutes(app: FastifyInstance, platform:
 
   app.delete('/v1/devices/:deviceId', async (request, reply) => {
     const { deviceId } = z.object({ deviceId: z.string() }).parse(request.params);
-    platform.unregisterDevice(request.auth.userId, deviceId);
+    await platform.unregisterDevice(request.auth.userId, deviceId);
     return reply.code(204).send();
   });
 }

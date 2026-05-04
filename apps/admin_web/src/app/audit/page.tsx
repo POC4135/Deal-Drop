@@ -1,8 +1,9 @@
 import { AdminShell } from '../../components/admin-shell';
 import { TableCard } from '../../components/table-card';
-import { auditEntries } from '../../lib/mock-data';
+import { adminApi } from '../../lib/api';
 
-export default function AuditPage() {
+export default async function AuditPage() {
+  const auditEntries = await adminApi.audit();
   return (
     <AdminShell eyebrow="Trust" title="Audit log">
       <TableCard
@@ -11,13 +12,13 @@ export default function AuditPage() {
         columns={['Action', 'Entity', 'Actor', 'At']}
         rows={auditEntries.map((entry) => [
           <span key={`${entry.id}-a`} className="font-semibold">
-            {entry.action}
+            {entry.type}
           </span>,
           <span key={`${entry.id}-e`}>
-            {entry.entityType} / {entry.entityId}
+            {entry.aggregateType} / {entry.aggregateId}
           </span>,
-          <span key={`${entry.id}-actor`}>{entry.actor}</span>,
-          <span key={`${entry.id}-time`}>{entry.createdAt}</span>,
+          <span key={`${entry.id}-actor`}>system</span>,
+          <span key={`${entry.id}-time`}>{entry.occurredAt}</span>,
         ])}
       />
     </AdminShell>

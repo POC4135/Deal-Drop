@@ -3,18 +3,18 @@
 ## Runtime topology
 
 - `apps/mobile_flutter` consumes `packages/contracts` and now talks to the live API surface through a Dio repository, local cache, and offline mutation queue.
-- `apps/admin_web` is a static-export operator console hosted from S3 + CloudFront.
-- `services/api` is a modular monolith running on ECS/Fargate.
-- `services/workers/*` consume queue fan-out from EventBridge + SQS.
-- Aurora PostgreSQL + PostGIS is the source of truth for entities and event-heavy tables.
-- Redis fronts hot read paths and leaderboard slices.
+- `apps/admin_web` is an operator console hosted as a Render web service.
+- `services/api` is a modular Fastify API hosted as a Render web service.
+- `services/workers/*` are Render background workers that consume Postgres-backed outbox and projection tables.
+- Supabase PostgreSQL + PostGIS is the source of truth for entities and event-heavy tables.
+- Supabase Auth owns user identity; DealDrop `users.role` owns app authorization.
 
 ## Data flow
 
 1. User and moderator write paths hit the API.
 2. API writes domain state plus `outbox_events`.
-3. Outbox relay publishes to EventBridge.
-4. Worker queues fan out to read-model, trust, gamification, dedupe, leaderboard, and stale-scan processors.
+3. Outbox relay marks durable Postgres events for worker consumption.
+4. Worker entrypoints process read-model, trust, gamification, dedupe, leaderboard, stale-scan, and notification dispatch responsibilities.
 5. Read models and confidence snapshots drive feed, map, search, and admin queues.
 
 ## Read path rules

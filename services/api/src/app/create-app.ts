@@ -1,7 +1,10 @@
 import cors from '@fastify/cors';
 import Fastify from 'fastify';
 
+import { parseRuntimeEnv } from '@dealdrop/config';
+
 import { DealDropPlatform } from '../bootstrap/platform.js';
+import { PostgresDealDropPlatform } from '../bootstrap/postgres-platform.js';
 import { registerAdminRoutes } from '../modules/admin/routes.js';
 import { registerAuthRoutes } from '../modules/auth/routes.js';
 import { registerContributionRoutes } from '../modules/contributions/routes.js';
@@ -18,6 +21,7 @@ import { registerErrorHandler } from '../plugins/error-handler.js';
 import { registerRequestContext } from '../plugins/request-context.js';
 
 export async function createApp() {
+  const env = parseRuntimeEnv(process.env);
   const app = Fastify({
     logger: {
       level: process.env.LOG_LEVEL ?? 'info',
@@ -30,7 +34,9 @@ export async function createApp() {
     },
   });
 
-  const platform = new DealDropPlatform();
+  const platform = (env.PLATFORM_BACKEND === 'postgres'
+    ? new PostgresDealDropPlatform()
+    : new DealDropPlatform()) as unknown as DealDropPlatform;
 
   await app.register(cors, {
     origin: true,

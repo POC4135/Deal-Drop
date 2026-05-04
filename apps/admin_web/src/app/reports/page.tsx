@@ -1,8 +1,9 @@
 import { AdminShell } from '../../components/admin-shell';
 import { TableCard } from '../../components/table-card';
-import { reportQueue } from '../../lib/mock-data';
+import { adminApi } from '../../lib/api';
 
-export default function ReportsPage() {
+export default async function ReportsPage() {
+  const reportQueue = await adminApi.reportsQueue();
   return (
     <AdminShell eyebrow="Queues" title="Reports queue">
       <TableCard

@@ -10,7 +10,7 @@ export async function registerLeaderboardRoutes(app: FastifyInstance, platform: 
       .parse(request.query);
     return {
       window,
-      items: platform.getLeaderboard(window),
+      items: await platform.getLeaderboard(window),
     };
   });
 }

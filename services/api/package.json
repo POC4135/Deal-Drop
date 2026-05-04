@@ -15,7 +15,9 @@
     "worker:trust": "tsx src/workers/trust.ts",
     "worker:gamification": "tsx src/workers/gamification.ts",
     "worker:stale-scan": "tsx src/workers/stale-scan.ts",
-    "worker:outbox-relay": "tsx src/workers/outbox-relay.ts"
+    "worker:outbox-relay": "tsx src/workers/outbox-relay.ts",
+    "worker:leaderboard-refresh": "tsx src/workers/leaderboard-refresh.ts",
+    "worker:notifications": "tsx src/workers/notifications.ts"
   },
   "dependencies": {
     "@dealdrop/config": "workspace:*",

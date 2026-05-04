@@ -1,0 +1,89 @@
+name: Production readiness
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  typescript:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgis/postgis:16-3.4
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: dealdrop
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d dealdrop"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/dealdrop
+      PLATFORM_BACKEND: postgres
+      USE_DEV_AUTH: "true"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.16.1
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm build
+      - run: pnpm --filter @dealdrop/api db:migrate
+
+      - name: Worker entrypoint smoke
+        run: |
+          pnpm --filter @dealdrop/api worker:outbox-relay
+          pnpm --filter @dealdrop/api worker:trust
+          pnpm --filter @dealdrop/api worker:gamification
+          pnpm --filter @dealdrop/api worker:leaderboard-refresh
+          pnpm --filter @dealdrop/api worker:stale-scan
+          pnpm --filter @dealdrop/api worker:notifications
+
+  flutter:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - working-directory: apps/mobile_flutter
+        run: flutter pub get
+
+      - working-directory: apps/mobile_flutter
+        run: flutter analyze
+
+      - working-directory: apps/mobile_flutter
+        run: flutter test
+
+      - working-directory: apps/mobile_flutter
+        run: >
+          flutter build web
+          --dart-define=DEALDROP_API_BASE_URL=https://deal-drop-y0qs.onrender.com
+          --dart-define=SUPABASE_URL=${{ secrets.SUPABASE_URL }}
+          --dart-define=SUPABASE_PUBLISHABLE_KEY=${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+
+      - working-directory: apps/mobile_flutter
+        run: >
+          flutter build apk
+          --dart-define=DEALDROP_API_BASE_URL=https://deal-drop-y0qs.onrender.com
+          --dart-define=SUPABASE_URL=${{ secrets.SUPABASE_URL }}
+          --dart-define=SUPABASE_PUBLISHABLE_KEY=${{ secrets.SUPABASE_PUBLISHABLE_KEY }}

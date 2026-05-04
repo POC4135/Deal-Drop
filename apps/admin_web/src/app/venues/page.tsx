@@ -2,9 +2,10 @@ import Link from 'next/link';
 
 import { AdminShell } from '../../components/admin-shell';
 import { TableCard } from '../../components/table-card';
-import { venues } from '../../lib/mock-data';
+import { adminApi } from '../../lib/api';
 
-export default function VenuesPage() {
+export default async function VenuesPage() {
+  const venues = await adminApi.venues();
   return (
     <AdminShell eyebrow="Catalog" title="Venues">
       <div className="mb-6 flex justify-end">

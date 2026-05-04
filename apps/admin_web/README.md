@@ -17,4 +17,5 @@ Internal Next.js operations console for moderation, trust review, stale listing 
 ## Notes
 
 - The UI intentionally prioritizes operator speed and dense information over marketing polish.
-- Production auth is designed around Cognito groups and JWT claims; the UI currently uses static mock data for page rendering while the backend admin routes mature.
+- Admin pages read and mutate live Fastify admin APIs through `src/lib/api.ts`.
+- Production auth uses a Supabase-issued bearer token supplied to the server as `DEALDROP_ADMIN_BEARER_TOKEN`; local development falls back to dev admin headers.

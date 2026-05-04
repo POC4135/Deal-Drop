@@ -1,6 +1,7 @@
 import { buildCacheKey, cacheTtls, eventTypes } from '@dealdrop/config';
 import type {
   AdminQueueItem,
+  AuthBootstrap,
   AuthResponse,
   ContributionCreate,
   ContributionHistoryResponse,
@@ -101,6 +102,58 @@ export class DealDropPlatform {
         marketingAnnouncements: false,
       };
     }
+
+    return {
+      session: {
+        userId: profile.id,
+        email: profile.email,
+        displayName: profile.displayName,
+        role: profile.role,
+        verifiedContributor: profile.verifiedContributor,
+      },
+      profile,
+    };
+  }
+
+  bootstrapAuthenticatedUser(
+    auth: {
+      userId: string;
+      email: string;
+      role: Profile['role'];
+      displayName: string;
+      verifiedContributor: boolean;
+    },
+    input: AuthBootstrap,
+  ): AuthResponse {
+    let profile = this.seed.users.find((user) => user.id === auth.userId);
+    if (!profile) {
+      profile = {
+        id: auth.userId,
+        email: auth.email,
+        displayName: input.displayName?.trim() || auth.displayName || auth.email.split('@')[0] || 'DealDrop User',
+        homeNeighborhood: input.homeNeighborhood,
+        role: auth.role,
+        verifiedContributor: auth.verifiedContributor,
+        neighborhoodSlugs: [slugify(input.homeNeighborhood)],
+        password: '',
+      };
+      this.seed.users.unshift(profile);
+      this.seed.favoriteIdsByUser[profile.id] = [];
+      this.seed.notificationsByUser[profile.id] = [];
+    } else {
+      profile.email = auth.email;
+      profile.displayName = input.displayName?.trim() || profile.displayName;
+      profile.homeNeighborhood = input.homeNeighborhood || profile.homeNeighborhood;
+      profile.role = auth.role;
+      profile.verifiedContributor = auth.verifiedContributor;
+    }
+
+    this.seed.preferencesByUser[profile.id] ??= {
+      contributionResolved: true,
+      pointsFinalized: true,
+      trustStatusChanged: true,
+      marketingAnnouncements: false,
+    };
 
     return {
       session: {
@@ -575,10 +628,11 @@ export class DealDropPlatform {
     return { reportId };
   }
 
-  async presignProofUpload(userId: string, contentType: string): Promise<{ assetKey: string; uploadUrl: string }> {
+  async presignProofUpload(userId: string, contentType: string): Promise<{ assetKey: string; uploadUrl: string; path: string }> {
     const assetKey = `proofs/${userId}/${ulid()}.${contentType.includes('png') ? 'png' : 'jpg'}`;
     return {
       assetKey,
+      path: assetKey,
       uploadUrl: `https://uploads.dealdrop.local/${assetKey}?signature=local-dev-placeholder`,
     };
   }

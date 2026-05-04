@@ -147,6 +147,23 @@ async function main() {
     for (const tag of listing.tags) {
       await client.query(`insert into listing_tags (listing_id, tag) values ($1, $2) on conflict do nothing`, [listing.id, tag]);
     }
+
+    await client.query(`delete from listing_offers where listing_id = $1`, [listing.id]);
+    for (const offer of listing.offers) {
+      await client.query(
+        `
+          insert into listing_offers (id, listing_id, title, original_price, deal_price, currency)
+          values ($1, $2, $3, $4, $5, $6)
+          on conflict (id) do update set
+            title = excluded.title,
+            original_price = excluded.original_price,
+            deal_price = excluded.deal_price,
+            currency = excluded.currency,
+            updated_at = now()
+        `,
+        [offer.id, listing.id, offer.title, offer.originalPrice, offer.dealPrice, offer.currency],
+      );
+    }
   }
 
   for (const entry of atlantaSeed.pointsLedger) {

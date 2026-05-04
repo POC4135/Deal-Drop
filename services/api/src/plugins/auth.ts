@@ -5,6 +5,8 @@ import { z } from 'zod';
 import { authClaimSchema, parseRuntimeEnv, resolveRole } from '@dealdrop/config';
 import type { Role } from '@dealdrop/shared-types';
 
+import { getPool } from '../db/pool.js';
+
 const devHeadersSchema = z.object({
   'x-dev-user-id': z.string().optional(),
   'x-dev-email': z.string().optional(),
@@ -15,7 +17,10 @@ const devHeadersSchema = z.object({
 
 export async function registerAuth(app: FastifyInstance): Promise<void> {
   const env = parseRuntimeEnv(process.env);
-  const jwks = createRemoteJWKSet(new URL(`${env.JWT_ISSUER}/.well-known/jwks.json`));
+  const jwtIssuer = env.SUPABASE_JWT_ISSUER ?? env.JWT_ISSUER;
+  const jwtAudience = env.SUPABASE_URL ? env.SUPABASE_JWT_AUDIENCE : env.JWT_AUDIENCE;
+  const jwksUrl = env.SUPABASE_JWKS_URL ?? `${jwtIssuer}/.well-known/jwks.json`;
+  const jwks = createRemoteJWKSet(new URL(jwksUrl));
 
   app.decorateRequest('auth', null);
 
@@ -62,18 +67,25 @@ export async function registerAuth(app: FastifyInstance): Promise<void> {
 
     const token = authorization.slice('Bearer '.length);
     const verified = await jwtVerify(token, jwks, {
-      issuer: env.JWT_ISSUER,
-      audience: env.JWT_AUDIENCE,
+      issuer: jwtIssuer,
+      audience: jwtAudience,
     });
     const claims = authClaimSchema.parse(verified.payload);
+    const fallbackRole = resolveRole(claims);
+    const appRole = env.PLATFORM_BACKEND === 'postgres' ? await resolveRoleFromDatabase(claims.sub, fallbackRole) : fallbackRole;
     request.auth = {
       userId: claims.sub,
       email: claims.email ?? 'unknown@dealdrop.app',
-      role: resolveRole(claims),
+      role: appRole,
       displayName: claims.username ?? claims.email ?? claims.sub,
-      verifiedContributor: resolveRole(claims) !== 'user',
+      verifiedContributor: appRole !== 'user',
     };
   });
+}
+
+async function resolveRoleFromDatabase(userId: string, fallbackRole: Role): Promise<Role> {
+  const result = await getPool().query<{ role: Role }>('select role from users where id = $1 limit 1', [userId]);
+  return result.rows[0]?.role ?? fallbackRole;
 }
 
 function isPublicRoute(method: string, url: string): boolean {

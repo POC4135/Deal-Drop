@@ -444,7 +444,7 @@ paths:
   /v1/auth/sign-up:
     post:
       tags: [Auth]
-      summary: Create an account and return the authenticated session.
+      summary: Create a local development account and return the authenticated session.
       requestBody:
         required: true
         content:
@@ -454,6 +454,25 @@ paths:
                 - $ref: '#/components/schemas/AuthRequest'
                 - type: object
                   required: [displayName, homeNeighborhood]
+      responses:
+        '200':
+          description: Authenticated session.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+  /v1/auth/bootstrap:
+    post:
+      tags: [Auth]
+      summary: Upsert the Supabase-authenticated user profile and return the app session contract.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthBootstrapRequest'
       responses:
         '200':
           description: Authenticated session.
@@ -1144,6 +1163,10 @@ components:
           type: string
         uploadUrl:
           type: string
+        path:
+          type: string
+        token:
+          type: string
     AuthRequest:
       type: object
       required: [email, password]
@@ -1157,6 +1180,14 @@ components:
           type: string
         homeNeighborhood:
           type: string
+    AuthBootstrapRequest:
+      type: object
+      properties:
+        displayName:
+          type: string
+        homeNeighborhood:
+          type: string
+          default: Midtown
     AuthSession:
       type: object
       properties:

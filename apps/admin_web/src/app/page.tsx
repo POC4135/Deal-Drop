@@ -2,9 +2,15 @@ import Link from 'next/link';
 
 import { AdminShell } from '../components/admin-shell';
 import { TableCard } from '../components/table-card';
-import { dashboardMetrics, listings, moderationQueue } from '../lib/mock-data';
+import { adminApi } from '../lib/api';
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+  const [metrics, moderationQueue] = await Promise.all([adminApi.dashboard(), adminApi.moderationQueue()]);
+  const dashboardMetrics = [
+    { label: 'Submission queue', value: `${metrics.openContributionCount} pending`, note: 'Contribution reviews waiting', tone: 'accent' },
+    { label: 'Issue reports', value: `${metrics.openReportCount} open`, note: 'Reports affecting listing trust', tone: 'rose' },
+    { label: 'Stale listings', value: `${metrics.staleListingCount} due`, note: 'Listings due for recheck', tone: 'warn' },
+  ];
   return (
     <AdminShell eyebrow="Dashboard" title="Moderation overview">
       <section className="grid gap-4 md:grid-cols-3">
@@ -22,7 +28,7 @@ export default function DashboardPage() {
           title="High-impact listings"
           subtitle="Trust and freshness watchlist for operator triage."
           columns={['Venue', 'Trust', 'Freshness', 'Action']}
-          rows={listings.map((listing) => [
+          rows={metrics.highRiskListings.map((listing) => [
             <div key={`${listing.id}-venue`}>
               <p className="font-semibold">{listing.venueName}</p>
               <p className="mt-1 text-xs text-[var(--body)]">{listing.title}</p>

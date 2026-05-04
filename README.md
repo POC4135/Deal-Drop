@@ -9,12 +9,12 @@ Pass 3 finishes the consumer mobile product on top of the Pass 2 platform founda
 - `apps/mobile_flutter`: Flutter consumer app from Pass 1, now renamed to the required monorepo path.
 - `apps/admin_web`: internal admin and moderation console.
 - `services/api`: Fastify + Drizzle backend foundation with public and admin APIs.
-- `services/workers/*`: queue-driven worker entrypoints for read-model, trust, gamification, dedupe, stale scan, and outbox relay responsibilities.
+- `services/workers/*`: Render background worker entrypoints for Postgres outbox, trust, gamification, leaderboard, stale scan, and notification responsibilities.
 - `packages/contracts`: OpenAPI contract source of truth.
 - `packages/shared_types`: shared DTOs, enums, and event schemas.
 - `packages/config`: runtime config, cache keys, queue names, and auth helpers.
 - `packages/design_tokens`: Flutter design tokens preserved from Pass 1.
-- `infra/terraform`: AWS IaC foundation.
+- `infra/terraform`: historical AWS IaC foundation; current production target is Supabase + Render.
 - `infra/local`: Docker Compose stack for Postgres/PostGIS, Redis, and MinIO.
 - `seed/atlanta`: launch-market seed payloads.
 - `tests`: initial API, trust, gamification, migration, worker, and RBAC tests.
@@ -86,10 +86,10 @@ During the final review pass, the following issues were fixed:
 
 ### Mobile app pending work
 
-- replace `shared_preferences` token/session persistence with `flutter_secure_storage` or equivalent Keychain/Keystore-backed storage
+- replace remaining `shared_preferences` app-session persistence with `flutter_secure_storage` or equivalent Keychain/Keystore-backed storage
 - integrate native push end-to-end with `firebase_messaging` for FCM and APNs token handling, background message handling, and notification-open routing
-- add a real proof upload flow with `image_picker` or `file_picker`, S3 upload execution, upload progress, and retry handling
-- replace the current dev-header auth bridge with real bearer-token/JWT auth against Cognito or another identity provider
+- add a real proof upload flow with `image_picker` or `file_picker`, Supabase Storage upload execution, upload progress, and retry handling
+- finish native Supabase auth edge cases such as confirmed-email flows, token-expiry UX, and deep-link callbacks
 - add crash reporting and release telemetry sinks for production environments
 - finalize native deep links / universal links / Android app links
 - complete final accessibility QA across smaller devices, text scaling, screen readers, and reduced-motion cases
@@ -97,24 +97,23 @@ During the final review pass, the following issues were fixed:
 
 ### Backend and platform pending work
 
-- replace the in-memory seed platform service with real repositories backed by PostgreSQL / PostGIS
-- wire Fastify auth to real JWT verification and role claims from Cognito instead of the current local `x-dev-*` bridge
+- validate the Postgres platform backend against Supabase staging data and remove any remaining seed-only fallbacks from production paths
+- keep Fastify auth on Supabase JWT verification and DealDrop DB roles; dev headers are local-only with `USE_DEV_AUTH=true`
 - implement secure password handling only through the real identity provider; the seed password flow is for local integration only
 - complete Redis-backed cache infrastructure and validate cache invalidation with real persistence
-- complete the outbox relay, EventBridge, SQS consumers, DLQ handling, and worker retry behavior against real AWS infrastructure
-- complete S3 proof upload finalize/attach flows and moderation proof review storage
+- harden Postgres outbox workers, retry behavior, and Render background worker scheduling
+- complete Supabase Storage proof upload finalize/attach flows and moderation proof review storage
 - implement real push delivery fan-out and notification preference enforcement on the backend
 - persist telemetry/analytics to a real sink and wire dashboards/alerting
-- validate and wire the admin web shell to live admin APIs instead of mock data
+- complete browser-side Supabase admin login/session handling beyond the current server-token API bridge
 - install `node`, `pnpm`, and `terraform` in the workspace and run API tests, worker tests, migrations, and Terraform validation for real
 - complete production secrets, domain, TLS, environment promotion, and deployment automation
 - finish rate limiting, abuse protection, and operational runbooks for public launch traffic
 
 ### Infrastructure and operations pending work
 
-- provision and validate AWS environments for `dev`, `staging`, and `prod`
-- configure Cognito user pool, groups, callback flows, and app clients
-- provision Aurora PostgreSQL, PostGIS extensions, Redis, S3 buckets, EventBridge, SQS, CloudFront, ECS/Fargate, and CloudWatch dashboards/alarms
+- provision and validate Supabase + Render environments for `dev`, `staging`, and `prod`
+- configure Supabase Auth, asymmetric JWT signing keys, Postgres, and Storage buckets
 - configure Google Maps SDK keys for Android and iOS release builds
 - configure APNs credentials and FCM project settings
 - add CI/CD for Flutter builds, backend tests, Terraform plan/apply, and release promotion
@@ -156,24 +155,17 @@ The current app was structured so the UI does not depend on seed/mock widgets di
 - Fastify
 - Drizzle ORM
 - PostgreSQL with PostGIS
-- Redis
-- S3
-- EventBridge
-- SQS + DLQs
-- Cognito
-- CloudWatch / structured logging / metrics sinks
+- Supabase Auth/Postgres/Storage
+- Render web services and background workers
+- Postgres outbox workers
+- FCM/APNs
+- structured logging / metrics sinks
 
-### AWS / platform
+### Platform
 
-- Terraform
-- ECS Fargate
-- ECR
-- Aurora PostgreSQL
-- ElastiCache Redis
-- CloudFront
-- Secrets Manager
-- DynamoDB for Terraform state locking
-- MinIO and Docker Compose for local infrastructure
+- Supabase project with asymmetric JWT signing keys
+- Render API, admin, and worker services
+- Docker Compose for local Postgres/PostGIS, Redis, and MinIO where needed
 
 ### Notification and release infrastructure
 
@@ -191,4 +183,4 @@ The local seed backend now expects an actual password for the seeded users:
 - `jon@dealdrop.app` / `dealdrop123`
 - `sam@dealdrop.app` / `dealdrop123`
 
-This is only for local integration flow validation. Production auth should come from Cognito or another real identity provider.
+This is only for local integration flow validation. Production auth comes from Supabase Auth and bearer-token verification in the API.

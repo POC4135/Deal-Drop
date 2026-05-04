@@ -1,18 +1,10 @@
-import { notFound } from 'next/navigation';
-
 import { AdminShell } from '../../../components/admin-shell';
-import { venues } from '../../../lib/mock-data';
-
-export function generateStaticParams() {
-  return venues.map((venue) => ({ venueId: venue.id }));
-}
+import { adminApi } from '../../../lib/api';
 
 export default async function VenueDetailPage({ params }: { params: Promise<{ venueId: string }> }) {
   const { venueId } = await params;
-  const venue = venues.find((candidate) => candidate.id === venueId);
-  if (!venue) {
-    notFound();
-  }
+  const venue = (await adminApi.venues()).find((candidate) => candidate.id === venueId);
+  if (!venue) return <AdminShell eyebrow="Catalog" title="Venue not found"><section className="panel p-8">No live venue exists for this id.</section></AdminShell>;
 
   return (
     <AdminShell eyebrow="Catalog" title={venue.name}>

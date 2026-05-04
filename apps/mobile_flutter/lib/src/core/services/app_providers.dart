@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/app_models.dart';
 import 'analytics_service.dart';
@@ -9,10 +10,14 @@ import 'dealdrop_repository.dart';
 import 'local_store.dart';
 
 final sharedPreferencesProvider = Provider<SharedPreferences>((ref) {
-  throw UnimplementedError('sharedPreferencesProvider must be overridden at startup.');
+  throw UnimplementedError(
+    'sharedPreferencesProvider must be overridden at startup.',
+  );
 });
 
-final appConfigProvider = Provider<AppConfig>((ref) => AppConfig.fromEnvironment());
+final appConfigProvider = Provider<AppConfig>(
+  (ref) => AppConfig.fromEnvironment(),
+);
 
 final localStoreProvider = Provider<LocalStore>((ref) {
   return LocalStore(ref.watch(sharedPreferencesProvider));
@@ -24,6 +29,9 @@ final apiClientProvider = Provider<DealDropApiClient>((ref) {
   return DealDropApiClient(
     config: config,
     sessionReader: () async => store.loadSession(),
+    accessTokenReader: () async => config.supabaseConfigured
+        ? Supabase.instance.client.auth.currentSession?.accessToken
+        : null,
   );
 });
 
@@ -36,6 +44,7 @@ final repositoryProvider = Provider<DealDropRepository>((ref) {
     apiClient: ref.watch(apiClientProvider),
     localStore: ref.watch(localStoreProvider),
     analytics: ref.watch(analyticsServiceProvider),
+    config: ref.watch(appConfigProvider),
   );
 });
 
@@ -72,10 +81,7 @@ class AuthState {
     );
   }
 
-  static const loading = AuthState(
-    initialized: false,
-    isGuest: true,
-  );
+  static const loading = AuthState(initialized: false, isGuest: true);
 }
 
 class AuthController extends AsyncNotifier<AuthState> {
@@ -95,30 +101,20 @@ class AuthController extends AsyncNotifier<AuthState> {
         profile: profile,
       );
     } catch (_) {
-      return AuthState(
-        initialized: true,
-        isGuest: false,
-        session: session,
-      );
+      return AuthState(initialized: true, isGuest: false, session: session);
     }
   }
 
   Future<void> continueAsGuest() async {
-    state = AsyncData(
-      const AuthState(initialized: true, isGuest: true),
-    );
+    state = AsyncData(const AuthState(initialized: true, isGuest: true));
   }
 
-  Future<void> signIn({
-    required String email,
-    required String password,
-  }) async {
+  Future<void> signIn({required String email, required String password}) async {
     state = const AsyncLoading();
     final result = await AsyncValue.guard(() async {
-      final payload = await ref.read(repositoryProvider).signIn(
-            email: email,
-            password: password,
-          );
+      final payload = await ref
+          .read(repositoryProvider)
+          .signIn(email: email, password: password);
       return AuthState(
         initialized: true,
         isGuest: false,
@@ -140,7 +136,9 @@ class AuthController extends AsyncNotifier<AuthState> {
   }) async {
     state = const AsyncLoading();
     final result = await AsyncValue.guard(() async {
-      final payload = await ref.read(repositoryProvider).signUp(
+      final payload = await ref
+          .read(repositoryProvider)
+          .signUp(
             email: email,
             password: password,
             displayName: displayName,

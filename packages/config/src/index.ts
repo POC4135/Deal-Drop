@@ -12,6 +12,7 @@ export const serviceNames = {
   moderationDedupeWorker: 'dealdrop-workers-moderation-dedupe',
   leaderboardRefreshWorker: 'dealdrop-workers-leaderboard-refresh',
   staleScanWorker: 'dealdrop-workers-stale-scan',
+  notificationDispatchWorker: 'dealdrop-workers-notifications',
 } as const;
 
 export const queueNames = {
@@ -53,21 +54,15 @@ export const cacheKeyVersion = 'v1';
 
 export const featureFlags = {
   opensearchReadModel: false,
-  notificationsDispatch: false,
+  notificationsDispatch: true,
   adminCsvExport: true,
-} as const;
-
-export const cognitoGroupToRole = {
-  'dealdrop-user': 'user',
-  'dealdrop-moderator': 'moderator',
-  'dealdrop-admin': 'admin',
 } as const;
 
 export const authClaimSchema = z.object({
   sub: z.string(),
   email: z.string().email().optional(),
-  'cognito:groups': z.array(z.string()).optional(),
-  role: z.enum(['user', 'moderator', 'admin']).optional(),
+  role: z.string().optional(),
+  app_role: z.enum(['user', 'moderator', 'admin']).optional(),
   username: z.string().optional(),
 });
 
@@ -76,19 +71,27 @@ export type AuthClaims = z.infer<typeof authClaimSchema>;
 export const runtimeEnvSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   APP_ENV: environmentSchema.default('dev'),
+  PLATFORM_BACKEND: z.enum(['seed', 'postgres']).default('seed'),
   PORT: z.coerce.number().default(3000),
   LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
   DATABASE_URL: z.string().default('postgres://postgres:postgres@localhost:5432/dealdrop'),
   REDIS_URL: z.string().default('redis://localhost:6379'),
-  S3_ENDPOINT: z.string().url().optional(),
-  AWS_REGION: z.string().default('us-east-1'),
-  COGNITO_USER_POOL_ID: z.string().default('local-dev-pool'),
-  COGNITO_CLIENT_ID: z.string().default('local-dev-client'),
-  JWT_AUDIENCE: z.string().default('dealdrop'),
-  JWT_ISSUER: z.string().default('https://cognito-idp.us-east-1.amazonaws.com/local-dev-pool'),
-  EVENT_BUS_NAME: z.string().default('dealdrop-dev'),
-  MEDIA_BUCKET: z.string().default('dealdrop-dev-media'),
-  PROOF_BUCKET: z.string().default('dealdrop-dev-proofs'),
+  SUPABASE_URL: z.string().url().optional(),
+  SUPABASE_JWKS_URL: z.string().url().optional(),
+  SUPABASE_JWT_ISSUER: z.string().url().optional(),
+  SUPABASE_JWT_AUDIENCE: z.string().default('authenticated'),
+  SUPABASE_PUBLISHABLE_KEY: z.string().optional(),
+  SUPABASE_SERVICE_ROLE_KEY: z.string().optional(),
+  SUPABASE_STORAGE_BUCKET: z.string().default('proofs'),
+  FCM_PROJECT_ID: z.string().optional(),
+  FCM_SERVICE_ACCOUNT_JSON: z.string().optional(),
+  FCM_SERVER_KEY: z.string().optional(),
+  APNS_KEY_ID: z.string().optional(),
+  APNS_TEAM_ID: z.string().optional(),
+  APNS_BUNDLE_ID: z.string().optional(),
+  APNS_PRIVATE_KEY: z.string().optional(),
+  JWT_AUDIENCE: z.string().default('authenticated'),
+  JWT_ISSUER: z.string().default('https://dealdrop.local/auth'),
   USE_DEV_AUTH: z
     .union([z.literal('true'), z.literal('false')])
     .default('true')
@@ -110,18 +113,12 @@ export function buildCacheKey(namespace: string, ...parts: Array<string | number
 }
 
 export function resolveRole(claims: AuthClaims): 'user' | 'moderator' | 'admin' {
-  if (claims.role) {
+  if (claims.app_role) {
+    return claims.app_role;
+  }
+
+  if (claims.role === 'user' || claims.role === 'moderator' || claims.role === 'admin') {
     return claims.role;
-  }
-
-  const groups = claims['cognito:groups'] ?? [];
-
-  if (groups.includes('dealdrop-admin')) {
-    return 'admin';
-  }
-
-  if (groups.includes('dealdrop-moderator')) {
-    return 'moderator';
   }
 
   return 'user';

@@ -2,9 +2,10 @@ import Link from 'next/link';
 
 import { AdminShell } from '../../components/admin-shell';
 import { TableCard } from '../../components/table-card';
-import { moderationQueue } from '../../lib/mock-data';
+import { adminApi } from '../../lib/api';
 
-export default function ModerationPage() {
+export default async function ModerationPage() {
+  const moderationQueue = await adminApi.moderationQueue();
   return (
     <AdminShell eyebrow="Queues" title="Moderation queue">
       <TableCard
@@ -20,7 +21,7 @@ export default function ModerationPage() {
           <span key={`${item.id}-p`} className="pill">
             {item.priority}
           </span>,
-          <Link key={`${item.id}-a`} href="/listings/lst_slice_combo" className="font-semibold text-amber-700">
+          <Link key={`${item.id}-a`} href={`/listings/${item.entityId}`} className="font-semibold text-amber-700">
             Review
           </Link>,
         ])}

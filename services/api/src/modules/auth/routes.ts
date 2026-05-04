@@ -1,6 +1,8 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 
+import { authBootstrapSchema } from '@dealdrop/shared-types';
+
 import type { DealDropPlatform } from '../../bootstrap/platform.js';
 
 const authBodySchema = z.object({
@@ -11,7 +13,18 @@ const authBodySchema = z.object({
 });
 
 export async function registerAuthRoutes(app: FastifyInstance, platform: DealDropPlatform): Promise<void> {
+  app.post('/v1/auth/bootstrap', async (request) => {
+    const body = authBootstrapSchema.parse(request.body ?? {});
+    return platform.bootstrapAuthenticatedUser(request.auth, body);
+  });
+
   app.post('/v1/auth/sign-in', async (request, reply) => {
+    if (process.env.USE_DEV_AUTH === 'false') {
+      return reply.code(404).send({
+        error: 'not_found',
+        message: 'Password auth is handled by Supabase in production.',
+      });
+    }
     const body = authBodySchema.parse(request.body);
     try {
       return platform.authenticate({
@@ -31,6 +44,12 @@ export async function registerAuthRoutes(app: FastifyInstance, platform: DealDro
   });
 
   app.post('/v1/auth/sign-up', async (request, reply) => {
+    if (process.env.USE_DEV_AUTH === 'false') {
+      return reply.code(404).send({
+        error: 'not_found',
+        message: 'Password auth is handled by Supabase in production.',
+      });
+    }
     const body = authBodySchema.parse(request.body);
     try {
       return platform.authenticate({
