@@ -42,6 +42,7 @@ async function main() {
   }
 
   for (const venue of atlantaSeed.venues) {
+    const neighborhoodSlug = venue.neighborhood.toLowerCase().replaceAll(' ', '-');
     await client.query(
       `
         insert into venues (id, slug, name, rating, status)
@@ -67,7 +68,7 @@ async function main() {
           $1,
           $2,
           $3,
-          lower(replace($3::text, ' ', '-')),
+          $7,
           $4,
           $5,
           $6,
@@ -79,8 +80,8 @@ async function main() {
           latitude = excluded.latitude,
           longitude = excluded.longitude,
           point = excluded.point
-      `,
-      [`loc_${venue.id}`, venue.id, venue.neighborhood, venue.address, venue.latitude, venue.longitude],
+        `,
+      [`loc_${venue.id}`, venue.id, venue.neighborhood, venue.address, venue.latitude, venue.longitude, neighborhoodSlug],
     );
   }
 
