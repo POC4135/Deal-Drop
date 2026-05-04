@@ -28,6 +28,6 @@ describe('trust engine', () => {
     });
 
     expect(result.confidenceScore).toBeLessThan(0.4);
-    expect(result.trustBand).toBe('needs_recheck');
+    expect(result.trustBand).toBe('disputed');
   });
 });
