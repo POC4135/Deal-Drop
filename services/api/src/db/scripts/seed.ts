@@ -172,11 +172,10 @@ async function main() {
       `
         insert into points_ledger (id, user_id, reason, status, points_delta, created_at)
         values ($1, $2, $3, $4, $5, $6)
-        on conflict (id) do update set
+        on conflict (id, created_at) do update set
           reason = excluded.reason,
           status = excluded.status,
-          points_delta = excluded.points_delta,
-          created_at = excluded.created_at
+          points_delta = excluded.points_delta
       `,
       [entry.id, entry.userId, entry.reason, entry.status, entry.pointsDelta, entry.createdAt],
     );
