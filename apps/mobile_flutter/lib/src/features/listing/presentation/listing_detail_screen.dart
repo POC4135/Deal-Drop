@@ -40,7 +40,7 @@ class _DetailBody extends ConsumerWidget {
     return CustomScrollView(
       slivers: [
         SliverPadding(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+          padding: const EdgeInsets.fromLTRB(16, 10, 16, 22),
           sliver: SliverList(
             delegate: SliverChildListDelegate.fixed([
               Row(
@@ -68,50 +68,86 @@ class _DetailBody extends ConsumerWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 18),
+              const SizedBox(height: 12),
               Container(
-                padding: const EdgeInsets.all(22),
+                padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [deal.tone.accent, deal.tone.surfaceTint],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(32),
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: DealDropPalette.divider),
+                  boxShadow: DealDropShadows.card,
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _Pill(
-                          label: deal.categoryLabel.toUpperCase(),
-                          background: Colors.white.withValues(alpha: 0.18),
-                          foreground: Colors.white,
+                        Container(
+                          width: 48,
+                          height: 48,
+                          decoration: BoxDecoration(
+                            color: deal.tone.surfaceTint,
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: Icon(
+                            deal.icon,
+                            color: deal.tone.accent,
+                            size: 25,
+                          ),
                         ),
-                        _Pill(
-                          label: deal.affordabilityLabel,
-                          background: Colors.white.withValues(alpha: 0.18),
-                          foreground: Colors.white,
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                deal.venueName,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: Theme.of(
+                                  context,
+                                ).textTheme.headlineMedium,
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                deal.valueHook,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: Theme.of(context).textTheme.bodyMedium
+                                    ?.copyWith(color: DealDropPalette.ink),
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 18),
-                    Text(
-                      deal.venueName,
-                      style: Theme.of(context).textTheme.displayMedium
-                          ?.copyWith(color: Colors.white, fontSize: 34),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 7,
+                      runSpacing: 7,
+                      children: [
+                        _Pill(
+                          label: deal.trustBand.label,
+                          background: deal.trustBand.tint,
+                          foreground: deal.trustBand.foreground,
+                          icon: deal.trustBand.icon,
+                        ),
+                        _Pill(
+                          label: deal.scheduleLabel,
+                          background: DealDropPalette.warmSurface,
+                          foreground: DealDropPalette.body,
+                          icon: Icons.schedule_rounded,
+                        ),
+                        _Pill(
+                          label: '${deal.distanceMiles.toStringAsFixed(1)} mi',
+                          background: Colors.white,
+                          foreground: DealDropPalette.body,
+                          icon: Icons.place_outlined,
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      deal.valueHook,
-                      style: Theme.of(
-                        context,
-                      ).textTheme.titleMedium?.copyWith(color: Colors.white),
-                    ),
-                    const SizedBox(height: 18),
+                    const SizedBox(height: 12),
                     Row(
                       children: [
                         Expanded(
@@ -123,8 +159,30 @@ class _DetailBody extends ConsumerWidget {
                         const SizedBox(width: 12),
                         Expanded(
                           child: _HeroMetric(
-                            label: 'Last updated',
+                            label: 'Updated',
                             value: deal.lastUpdatedText,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () => context.push(
+                              '/contribute/confirm-active?listingId=${deal.id}',
+                            ),
+                            icon: const Icon(Icons.verified_rounded),
+                            label: const Text('Confirm'),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: () => _openDirections(context, deal),
+                            icon: const Icon(Icons.directions_rounded),
+                            label: const Text('Directions'),
                           ),
                         ),
                       ],
@@ -132,40 +190,14 @@ class _DetailBody extends ConsumerWidget {
                   ],
                 ),
               ),
-              const SizedBox(height: 20),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  _Pill(
-                    label: deal.trustBand.label,
-                    background: deal.trustBand.tint,
-                    foreground: deal.trustBand.foreground,
-                    icon: deal.trustBand.icon,
-                  ),
-                  _Pill(
-                    label: deal.scheduleLabel,
-                    background: Colors.white,
-                    foreground: DealDropPalette.body,
-                    icon: Icons.schedule_rounded,
-                  ),
-                  _Pill(
-                    label:
-                        '${deal.distanceMiles.toStringAsFixed(1)} mi • ${deal.neighborhood}',
-                    background: Colors.white,
-                    foreground: DealDropPalette.body,
-                    icon: Icons.place_outlined,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 18),
+              const SizedBox(height: 12),
               Text(
                 deal.valueNote,
                 style: Theme.of(
                   context,
                 ).textTheme.bodyLarge?.copyWith(color: DealDropPalette.ink),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 14),
               _DetailSection(
                 title: 'Trust and freshness',
                 child: Column(
@@ -251,29 +283,7 @@ class _DetailBody extends ConsumerWidget {
                   ],
                 ),
               ),
-              const SizedBox(height: 18),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () => _openDirections(context, deal),
-                      icon: const Icon(Icons.directions_rounded),
-                      label: const Text('Directions'),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () => context.push(
-                        '/contribute/confirm-active?listingId=${deal.id}',
-                      ),
-                      icon: const Icon(Icons.verified_rounded),
-                      label: const Text('Confirm'),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 14),
               Row(
                 children: [
                   Expanded(
@@ -389,17 +399,18 @@ class _DetailSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: DealDropPalette.divider),
         boxShadow: DealDropShadows.card,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: Theme.of(context).textTheme.titleLarge),
-          const SizedBox(height: 14),
+          Text(title, style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 10),
           child,
         ],
       ),
@@ -418,8 +429,8 @@ class _HeroMetric extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.16),
-        borderRadius: BorderRadius.circular(18),
+        color: DealDropPalette.warmSurface,
+        borderRadius: BorderRadius.circular(14),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -428,14 +439,14 @@ class _HeroMetric extends StatelessWidget {
             label.toUpperCase(),
             style: Theme.of(
               context,
-            ).textTheme.labelMedium?.copyWith(color: Colors.white),
+            ).textTheme.labelMedium?.copyWith(color: DealDropPalette.muted),
           ),
           const SizedBox(height: 8),
           Text(
             value,
             style: Theme.of(
               context,
-            ).textTheme.titleMedium?.copyWith(color: Colors.white),
+            ).textTheme.titleMedium?.copyWith(color: DealDropPalette.ink),
           ),
         ],
       ),
@@ -457,7 +468,7 @@ class _InfoRow extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            width: 110,
+            width: 96,
             child: Text(
               label.toUpperCase(),
               style: Theme.of(context).textTheme.labelMedium,
@@ -489,7 +500,7 @@ class _Pill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: background,
         borderRadius: BorderRadius.circular(999),
@@ -526,11 +537,11 @@ class _TopIconButton extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(16),
       child: Ink(
-        width: 48,
-        height: 48,
+        width: 42,
+        height: 42,
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(14),
           border: Border.all(color: DealDropPalette.divider),
         ),
         child: Icon(icon, color: DealDropPalette.ink),

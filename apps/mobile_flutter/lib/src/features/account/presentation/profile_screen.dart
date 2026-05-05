@@ -21,7 +21,7 @@ class ProfileScreen extends ConsumerWidget {
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+          padding: const EdgeInsets.fromLTRB(16, 10, 16, 20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -43,13 +43,13 @@ class ProfileScreen extends ConsumerWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 18),
+              const SizedBox(height: 12),
               profile.when(
                 data: (value) => _ProfileHero(value: value),
                 error: (error, _) => Text('$error'),
                 loading: () => const Center(child: CircularProgressIndicator()),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 14),
               karma.when(
                 data: (value) => Row(
                   children: [
@@ -61,7 +61,7 @@ class ProfileScreen extends ConsumerWidget {
                         label: 'Finalized points',
                       ),
                     ),
-                    const SizedBox(width: 14),
+                    const SizedBox(width: 10),
                     Expanded(
                       child: _StatCard(
                         value: '${value.currentStreakDays}',
@@ -73,12 +73,12 @@ class ProfileScreen extends ConsumerWidget {
                 error: (error, _) => Text('$error'),
                 loading: () => const SizedBox.shrink(),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 18),
               Text(
                 'Preferences',
-                style: Theme.of(context).textTheme.headlineMedium,
+                style: Theme.of(context).textTheme.titleLarge,
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 10),
               preferences.when(
                 data: (value) => Column(
                   children: [
@@ -93,7 +93,7 @@ class ProfileScreen extends ConsumerWidget {
                         value.copyWith(contributionResolved: next),
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 8),
                     _PreferenceRow(
                       label: 'Points finalized',
                       subtitle: 'Know when pending Karma clears review.',
@@ -104,7 +104,7 @@ class ProfileScreen extends ConsumerWidget {
                         value.copyWith(pointsFinalized: next),
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 8),
                     _PreferenceRow(
                       label: 'Trust changes',
                       subtitle:
@@ -121,30 +121,27 @@ class ProfileScreen extends ConsumerWidget {
                 error: (error, _) => Text('$error'),
                 loading: () => const Center(child: CircularProgressIndicator()),
               ),
-              const SizedBox(height: 24),
-              Text(
-                'Account',
-                style: Theme.of(context).textTheme.headlineMedium,
-              ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 18),
+              Text('Account', style: Theme.of(context).textTheme.titleLarge),
+              const SizedBox(height: 10),
               _ActionRow(
                 icon: Icons.bookmark_outline_rounded,
                 label: 'Saved deals',
                 onTap: () => context.push('/account/saved'),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
               _ActionRow(
                 icon: Icons.notifications_none_rounded,
                 label: 'Notifications',
                 onTap: () => context.push('/account/notifications'),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
               _ActionRow(
                 icon: Icons.emoji_events_outlined,
                 label: 'Open Karma',
                 onTap: () => context.go('/karma'),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
               _ActionRow(
                 icon: Icons.logout_rounded,
                 label: 'Sign out',
@@ -200,32 +197,33 @@ class _ProfileHero extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(22),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(30),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: DealDropPalette.divider),
         boxShadow: DealDropShadows.card,
       ),
       child: Row(
         children: [
           Container(
-            width: 82,
-            height: 82,
+            width: 58,
+            height: 58,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: DealDropPalette.goldSoft,
-              border: Border.all(color: Colors.white, width: 4),
+              border: Border.all(color: Colors.white, width: 2),
             ),
             child: Center(
               child: Text(
                 initials,
-                style: Theme.of(context).textTheme.displayMedium?.copyWith(
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   color: DealDropPalette.goldDeep,
                 ),
               ),
             ),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -236,7 +234,7 @@ class _ProfileHero extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 Text(value.email, style: Theme.of(context).textTheme.bodySmall),
-                const SizedBox(height: 10),
+                const SizedBox(height: 8),
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
@@ -267,10 +265,10 @@ class _StatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 22),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
       decoration: BoxDecoration(
         color: DealDropPalette.warmSurface,
-        borderRadius: BorderRadius.circular(26),
+        borderRadius: BorderRadius.circular(14),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -279,7 +277,7 @@ class _StatCard extends StatelessWidget {
             value,
             style: Theme.of(context).textTheme.displayMedium?.copyWith(
               color: DealDropPalette.goldDeep,
-              fontSize: 32,
+              fontSize: 24,
             ),
           ),
           const SizedBox(height: 6),
@@ -309,10 +307,11 @@ class _PreferenceRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: DealDropPalette.divider),
         boxShadow: DealDropShadows.card,
       ),
       child: Row(
@@ -351,22 +350,23 @@ class _ActionRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(24),
+      borderRadius: BorderRadius.circular(14),
       child: Ink(
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         decoration: BoxDecoration(
           color: destructive ? const Color(0xFFFBE0E5) : Colors.white,
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: DealDropPalette.divider),
           boxShadow: destructive ? null : DealDropShadows.card,
         ),
         child: Row(
           children: [
             Container(
-              width: 48,
-              height: 48,
+              width: 36,
+              height: 36,
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
                 icon,
@@ -377,7 +377,10 @@ class _ActionRow extends StatelessWidget {
             ),
             const SizedBox(width: 14),
             Expanded(
-              child: Text(label, style: Theme.of(context).textTheme.titleLarge),
+              child: Text(
+                label,
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
             ),
             const Icon(
               Icons.chevron_right_rounded,
@@ -426,11 +429,11 @@ class _HeaderIcon extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(16),
       child: Ink(
-        width: 48,
-        height: 48,
+        width: 42,
+        height: 42,
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(14),
           border: Border.all(color: DealDropPalette.divider),
         ),
         child: Icon(icon, color: DealDropPalette.ink),

@@ -36,9 +36,9 @@ final class DealDropSpacing {
 }
 
 final class DealDropRadii {
-  static const sm = Radius.circular(14);
-  static const md = Radius.circular(20);
-  static const lg = Radius.circular(28);
+  static const sm = Radius.circular(10);
+  static const md = Radius.circular(14);
+  static const lg = Radius.circular(18);
   static const pill = Radius.circular(999);
 }
 
@@ -46,16 +46,16 @@ final class DealDropShadows {
   static const card = [
     BoxShadow(
       color: DealDropPalette.shadow,
-      blurRadius: 20,
-      offset: Offset(0, 10),
+      blurRadius: 14,
+      offset: Offset(0, 6),
     ),
   ];
 
   static const soft = [
     BoxShadow(
       color: DealDropPalette.shadow,
-      blurRadius: 32,
-      offset: Offset(0, 16),
+      blurRadius: 22,
+      offset: Offset(0, 10),
     ),
   ];
 }

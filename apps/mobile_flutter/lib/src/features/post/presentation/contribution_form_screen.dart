@@ -114,7 +114,7 @@ class _ContributionFormScreenState
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+          padding: const EdgeInsets.fromLTRB(16, 10, 16, 20),
           child: Form(
             key: _formKey,
             child: Column(
@@ -138,9 +138,11 @@ class _ContributionFormScreenState
                 const SizedBox(height: 10),
                 Text(
                   config.description,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.bodyLarge,
                 ),
-                const SizedBox(height: 22),
+                const SizedBox(height: 12),
                 if (_requiresListingSelection) ...[
                   Text(
                     'Select listing',
@@ -178,6 +180,8 @@ class _ContributionFormScreenState
                           (deal) => Padding(
                             padding: const EdgeInsets.only(bottom: 8),
                             child: ListTile(
+                              dense: true,
+                              visualDensity: VisualDensity.compact,
                               onTap: () => setState(() {
                                 _selectedListing = deal;
                                 _searchController.text = deal.venueName;
@@ -185,7 +189,7 @@ class _ContributionFormScreenState
                               }),
                               tileColor: Colors.white,
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(18),
+                                borderRadius: BorderRadius.circular(14),
                               ),
                               title: Text(deal.venueName),
                               subtitle: Text(
@@ -195,7 +199,7 @@ class _ContributionFormScreenState
                           ),
                         ),
                   ],
-                  const SizedBox(height: 18),
+                  const SizedBox(height: 12),
                 ],
                 if (!_requiresListingSelection) ...[
                   const _FieldLabel('Venue'),
@@ -230,10 +234,12 @@ class _ContributionFormScreenState
                           (place) => Padding(
                             padding: const EdgeInsets.only(bottom: 8),
                             child: ListTile(
+                              dense: true,
+                              visualDensity: VisualDensity.compact,
                               onTap: () => _selectGooglePlace(place),
                               tileColor: Colors.white,
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(18),
+                                borderRadius: BorderRadius.circular(14),
                               ),
                               leading: const Icon(Icons.place_outlined),
                               title: Text(place.mainText),
@@ -242,7 +248,7 @@ class _ContributionFormScreenState
                           ),
                         ),
                   ],
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 12),
                   const _FieldLabel('Neighborhood'),
                   const SizedBox(height: 10),
                   TextFormField(
@@ -253,7 +259,7 @@ class _ContributionFormScreenState
                       hintText: 'Midtown, West Midtown, Ponce...',
                     ),
                   ),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 12),
                   const _FieldLabel('Title'),
                   const SizedBox(height: 10),
                   TextFormField(
@@ -265,7 +271,7 @@ class _ContributionFormScreenState
                       hintText: 'Short value-forward title',
                     ),
                   ),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 12),
                 ],
                 const _FieldLabel('Details'),
                 const SizedBox(height: 10),
@@ -280,7 +286,7 @@ class _ContributionFormScreenState
                   ),
                 ),
                 if (config.slug != 'confirm-active') ...[
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 12),
                   const _FieldLabel('Conditions or restrictions'),
                   const SizedBox(height: 10),
                   TextFormField(
@@ -294,7 +300,7 @@ class _ContributionFormScreenState
                 ],
                 if (config.slug == 'suggest-deal' ||
                     config.slug == 'suggest-update') ...[
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 12),
                   const _FieldLabel('Schedule'),
                   const SizedBox(height: 10),
                   TextFormField(
@@ -305,7 +311,7 @@ class _ContributionFormScreenState
                   ),
                 ],
                 if (config.slug == 'report-expired') ...[
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 12),
                   const _FieldLabel('Reason'),
                   const SizedBox(height: 10),
                   DropdownButtonFormField<String>(
@@ -329,7 +335,7 @@ class _ContributionFormScreenState
                     decoration: const InputDecoration(),
                   ),
                 ],
-                const SizedBox(height: 14),
+                const SizedBox(height: 12),
                 const _FieldLabel('Evidence note'),
                 const SizedBox(height: 10),
                 TextFormField(
@@ -340,7 +346,7 @@ class _ContributionFormScreenState
                         'What did you see in person? Receipt, menu board, pricing sign, or timestamped photo.',
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
                 InkWell(
                   onTap: _submitting
                       ? null
@@ -366,22 +372,22 @@ class _ContributionFormScreenState
                             });
                           }
                         },
-                  borderRadius: BorderRadius.circular(24),
+                  borderRadius: BorderRadius.circular(14),
                   child: Ink(
-                    padding: const EdgeInsets.all(18),
+                    padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(24),
+                      borderRadius: BorderRadius.circular(14),
                       border: Border.all(color: DealDropPalette.divider),
                     ),
                     child: Row(
                       children: [
                         Container(
-                          width: 56,
-                          height: 56,
+                          width: 40,
+                          height: 40,
                           decoration: BoxDecoration(
                             color: config.tint,
-                            borderRadius: BorderRadius.circular(18),
+                            borderRadius: BorderRadius.circular(14),
                           ),
                           child: const Icon(
                             Icons.upload_rounded,
@@ -392,8 +398,10 @@ class _ContributionFormScreenState
                         Expanded(
                           child: Text(
                             _proofAssetKey == null
-                                ? 'Request a signed proof-upload slot. Native picker wiring is the next step after backend validation.'
+                                ? 'Add proof when available. A signed upload slot will be created for this submission.'
                                 : 'Upload slot created: $_proofAssetKey',
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
                             style: Theme.of(context).textTheme.bodyMedium,
                           ),
                         ),
@@ -402,13 +410,13 @@ class _ContributionFormScreenState
                   ),
                 ),
                 if (_error != null) ...[
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
                       color: const Color(0xFFFBE0E5),
-                      borderRadius: BorderRadius.circular(18),
+                      borderRadius: BorderRadius.circular(14),
                     ),
                     child: Text(
                       _error!,
@@ -416,13 +424,13 @@ class _ContributionFormScreenState
                     ),
                   ),
                 ],
-                const SizedBox(height: 18),
+                const SizedBox(height: 12),
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.all(18),
+                  padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: config.tint.withValues(alpha: 0.55),
-                    borderRadius: BorderRadius.circular(24),
+                    borderRadius: BorderRadius.circular(14),
                   ),
                   child: Text(
                     config.reviewCopy,
@@ -431,7 +439,7 @@ class _ContributionFormScreenState
                     ),
                   ),
                 ),
-                const SizedBox(height: 22),
+                const SizedBox(height: 12),
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
@@ -681,7 +689,7 @@ class _SelectedGooglePlaceTile extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(14),
         boxShadow: DealDropShadows.card,
       ),
       child: Row(
@@ -731,7 +739,7 @@ class _SelectedListingTile extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(14),
         boxShadow: DealDropShadows.card,
       ),
       child: Row(

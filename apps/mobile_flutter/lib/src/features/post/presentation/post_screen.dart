@@ -51,69 +51,39 @@ class PostScreen extends ConsumerWidget {
       child: CustomScrollView(
         slivers: [
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+            padding: const EdgeInsets.fromLTRB(16, 10, 16, 24),
             sliver: SliverList(
               delegate: SliverChildListDelegate.fixed([
-                Container(
-                  padding: const EdgeInsets.all(22),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [DealDropPalette.goldDeep, DealDropPalette.gold],
-                    ),
-                    borderRadius: BorderRadius.circular(30),
-                    boxShadow: DealDropShadows.soft,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(999),
-                        ),
-                        child: Text(
-                          'QUALITY CONTRIBUTIONS ONLY',
-                          style: Theme.of(context).textTheme.labelMedium
-                              ?.copyWith(color: Colors.white),
-                        ),
-                      ),
-                      const SizedBox(height: 18),
-                      Text(
-                        'Keep Atlanta fresh',
-                        style: Theme.of(context).textTheme.displayMedium
-                            ?.copyWith(color: Colors.white),
-                      ),
-                      const SizedBox(height: 10),
-                      Text(
-                        'Nothing hits the public feed directly. Fast, high-signal submissions move trust and points the quickest.',
-                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: Colors.white.withValues(alpha: 0.9),
-                        ),
-                      ),
-                    ],
-                  ),
+                Text('Post', style: Theme.of(context).textTheme.headlineMedium),
+                const SizedBox(height: 3),
+                Text(
+                  'Submit a deal, fix details, or confirm freshness.',
+                  style: Theme.of(context).textTheme.bodySmall,
                 ),
-                const SizedBox(height: 22),
-                for (final action in actions) ...[
+                const SizedBox(height: 14),
+                _ActionCard(
+                  action: actions.first,
+                  prominent: true,
+                  onTap: () =>
+                      context.push('/contribute/${actions.first.slug}'),
+                ),
+                const SizedBox(height: 10),
+                for (final action in actions.skip(1)) ...[
                   _ActionCard(
                     action: action,
                     onTap: () => context.push('/contribute/${action.slug}'),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 8),
                 ],
-                const SizedBox(height: 8),
+                const SizedBox(height: 10),
                 offlineQueue.when(
                   data: (items) => items.isEmpty
                       ? const SizedBox.shrink()
                       : Container(
-                          padding: const EdgeInsets.all(18),
+                          padding: const EdgeInsets.all(14),
                           decoration: BoxDecoration(
                             color: const Color(0xFFFFF3E6),
-                            borderRadius: BorderRadius.circular(26),
+                            borderRadius: BorderRadius.circular(14),
                           ),
                           child: Row(
                             children: [
@@ -137,12 +107,12 @@ class PostScreen extends ConsumerWidget {
                   error: (_, _) => const SizedBox.shrink(),
                   loading: () => const SizedBox.shrink(),
                 ),
-                const SizedBox(height: 18),
+                const SizedBox(height: 16),
                 Text(
                   'Recent contribution activity',
-                  style: Theme.of(context).textTheme.headlineMedium,
+                  style: Theme.of(context).textTheme.titleLarge,
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 10),
                 contributions.when(
                   data: (items) {
                     if (items.isEmpty) {
@@ -177,47 +147,65 @@ class PostScreen extends ConsumerWidget {
 }
 
 class _ActionCard extends StatelessWidget {
-  const _ActionCard({required this.action, required this.onTap});
+  const _ActionCard({
+    required this.action,
+    required this.onTap,
+    this.prominent = false,
+  });
 
   final _ContributionAction action;
   final VoidCallback onTap;
+  final bool prominent;
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(26),
+      borderRadius: BorderRadius.circular(16),
       child: Ink(
-        padding: const EdgeInsets.all(18),
+        padding: EdgeInsets.all(prominent ? 16 : 13),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(26),
+          color: prominent ? DealDropPalette.goldSoft : Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: prominent ? DealDropPalette.gold : DealDropPalette.divider,
+          ),
           boxShadow: DealDropShadows.card,
         ),
         child: Row(
           children: [
             Container(
-              width: 60,
-              height: 60,
+              width: prominent ? 50 : 42,
+              height: prominent ? 50 : 42,
               decoration: BoxDecoration(
-                color: action.tint,
-                borderRadius: BorderRadius.circular(18),
+                color: prominent ? Colors.white : action.tint,
+                borderRadius: BorderRadius.circular(14),
               ),
-              child: Icon(action.icon, color: DealDropPalette.ink),
+              child: Icon(
+                action.icon,
+                color: prominent
+                    ? DealDropPalette.goldDeep
+                    : DealDropPalette.ink,
+                size: prominent ? 25 : 21,
+              ),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     action.title,
-                    style: Theme.of(context).textTheme.titleLarge,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.titleMedium,
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 3),
                   Text(
                     action.description,
-                    style: Theme.of(context).textTheme.bodyMedium,
+                    maxLines: prominent ? 2 : 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodySmall,
                   ),
                 ],
               ),
@@ -251,7 +239,8 @@ class _ContributionHistoryRow extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: DealDropPalette.divider),
         boxShadow: DealDropShadows.card,
       ),
       child: Column(
@@ -284,9 +273,9 @@ class _ContributionHistoryRow extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           Text(item.summary, style: Theme.of(context).textTheme.bodyMedium),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           Text(
             '${item.pointsDelta >= 0 ? '+' : ''}${item.pointsDelta} pts • ${item.pointsStatus}',
             style: Theme.of(context).textTheme.bodySmall,

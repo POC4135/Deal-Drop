@@ -65,7 +65,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
           Positioned.fill(
             child: ClipRRect(
               borderRadius: const BorderRadius.vertical(
-                bottom: Radius.circular(34),
+                bottom: Radius.circular(18),
               ),
               child: canRenderInteractiveMap
                   ? GoogleMap(
@@ -102,16 +102,19 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             ),
           ),
           Positioned(
-            left: 20,
-            right: 20,
-            top: 16,
+            left: 16,
+            right: 16,
+            top: 10,
             child: Column(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(14),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(24),
+                    borderRadius: BorderRadius.circular(16),
                     boxShadow: DealDropShadows.card,
                   ),
                   child: Row(
@@ -164,7 +167,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             ),
           ),
           Positioned(
-            right: 20,
+            right: 16,
             bottom: selectedDealAsync == null ? 32 : 220,
             child: Column(
               children: [
@@ -200,9 +203,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             ),
           if (selectedDealAsync != null)
             Positioned(
-              left: 14,
-              right: 14,
-              bottom: 20,
+              left: 12,
+              right: 12,
+              bottom: 14,
               child: selectedDealAsync.when(
                 data: (deal) => GestureDetector(
                   onTap: () => context.push('/listing/${deal.id}'),
@@ -371,21 +374,21 @@ class _MapUnavailableSurface extends StatelessWidget {
       child: Center(
         child: Container(
           width: 250,
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
             color: Colors.white.withValues(alpha: 0.92),
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(16),
             boxShadow: DealDropShadows.card,
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                width: 54,
-                height: 54,
+                width: 44,
+                height: 44,
                 decoration: BoxDecoration(
                   color: DealDropPalette.mint,
-                  borderRadius: BorderRadius.circular(18),
+                  borderRadius: BorderRadius.circular(14),
                 ),
                 child: const Icon(
                   Icons.map_outlined,
@@ -457,7 +460,7 @@ class _MapControl extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(14),
         boxShadow: DealDropShadows.card,
       ),
       child: IconButton(
@@ -476,22 +479,22 @@ class _MapPreviewCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(28),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: DealDropShadows.soft,
       ),
       child: Row(
         children: [
           Container(
-            width: 88,
-            height: 88,
+            width: 58,
+            height: 58,
             decoration: BoxDecoration(
               color: deal.tone.surfaceTint,
-              borderRadius: BorderRadius.circular(22),
+              borderRadius: BorderRadius.circular(14),
             ),
-            child: Icon(deal.icon, size: 44, color: deal.tone.accent),
+            child: Icon(deal.icon, size: 30, color: deal.tone.accent),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -514,17 +517,21 @@ class _MapPreviewCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 5),
                 Text(
                   deal.venueName,
-                  style: Theme.of(context).textTheme.titleLarge,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.titleMedium,
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 2),
                 Text(
                   deal.valueHook,
-                  style: Theme.of(context).textTheme.bodyMedium,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodySmall,
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 4),
                 Text(
                   '${deal.neighborhood} • ${deal.affordabilityLabel}',
                   style: Theme.of(context).textTheme.bodySmall,
@@ -547,7 +554,7 @@ class _MapPreviewLoading extends StatelessWidget {
       height: 150,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(28),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: DealDropShadows.card,
       ),
       child: const Center(child: CircularProgressIndicator()),
@@ -574,10 +581,10 @@ class _InlineBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: DealDropShadows.card,
       ),
       child: Row(

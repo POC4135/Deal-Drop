@@ -45,7 +45,7 @@ class _DealsScreenState extends ConsumerState<DealsScreen> {
         child: CustomScrollView(
           slivers: [
             SliverPadding(
-              padding: const EdgeInsets.fromLTRB(18, 12, 18, 18),
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
               sliver: SliverList(
                 delegate: SliverChildListDelegate.fixed([
                   Row(
@@ -59,9 +59,11 @@ class _DealsScreenState extends ConsumerState<DealsScreen> {
                               style: Theme.of(context).textTheme.headlineMedium,
                             ),
                             const SizedBox(height: 4),
-                            _MiniStatusPill(
-                              icon: Icons.bolt_rounded,
-                              label: 'Fresh deals',
+                            Text(
+                              'Verified local deals near you',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context).textTheme.bodySmall,
                             ),
                           ],
                         ),
@@ -74,7 +76,7 @@ class _DealsScreenState extends ConsumerState<DealsScreen> {
                             : Icons.notifications_none_rounded,
                         onTap: () => context.push('/account/notifications'),
                       ),
-                      const SizedBox(width: 10),
+                      const SizedBox(width: 8),
                       _AvatarButton(
                         initials: _initials(
                           auth.valueOrNull?.profile?.displayName ?? 'Guest',
@@ -83,19 +85,20 @@ class _DealsScreenState extends ConsumerState<DealsScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 14),
                   InkWell(
                     onTap: () => context.push('/search'),
-                    borderRadius: BorderRadius.circular(22),
+                    borderRadius: BorderRadius.circular(14),
                     child: Ink(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 13,
+                        horizontal: 13,
+                        vertical: 11,
                       ),
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(22),
+                        borderRadius: BorderRadius.circular(14),
                         border: Border.all(color: DealDropPalette.divider),
+                        boxShadow: DealDropShadows.card,
                       ),
                       child: Row(
                         children: [
@@ -118,9 +121,9 @@ class _DealsScreenState extends ConsumerState<DealsScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 10),
                   SizedBox(
-                    height: 42,
+                    height: 36,
                     child: ListView.separated(
                       scrollDirection: Axis.horizontal,
                       itemCount: DiscoveryFilter.values.length,
@@ -139,9 +142,7 @@ class _DealsScreenState extends ConsumerState<DealsScreen> {
                       },
                     ),
                   ),
-                  const SizedBox(height: 14),
-                  const _SpotlightBanner(),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 10),
                 ]),
               ),
             ),
@@ -161,14 +162,14 @@ class _DealsScreenState extends ConsumerState<DealsScreen> {
                   );
                 }
                 return SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(18, 0, 18, 28),
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
                   sliver: SliverList(
                     delegate: SliverChildBuilderDelegate((context, index) {
                       final section = sections[index];
                       final currentSavedIds =
                           savedIds.valueOrNull ?? const <String>{};
                       return Padding(
-                        padding: const EdgeInsets.only(bottom: 22),
+                        padding: const EdgeInsets.only(bottom: 16),
                         child: _FeedSection(
                           section: section,
                           savedIds: currentSavedIds,
@@ -251,10 +252,10 @@ class _FeedSection extends ConsumerWidget {
             style: Theme.of(context).textTheme.bodySmall,
           ),
         ],
-        const SizedBox(height: 12),
+        const SizedBox(height: 9),
         ...section.items.map(
           (deal) => Padding(
-            padding: const EdgeInsets.only(bottom: 14),
+            padding: const EdgeInsets.only(bottom: 10),
             child: DealCard(
               deal: deal.copyWith(saved: savedIds.contains(deal.id)),
               onTap: () => context.push('/listing/${deal.id}'),
@@ -287,62 +288,6 @@ class _FeedSection extends ConsumerWidget {
   }
 }
 
-class _SpotlightBanner extends StatelessWidget {
-  const _SpotlightBanner();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(16, 14, 14, 14),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [DealDropPalette.goldDeep, DealDropPalette.gold],
-        ),
-        borderRadius: BorderRadius.circular(22),
-        boxShadow: DealDropShadows.card,
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Fresh this week',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleLarge?.copyWith(color: Colors.white),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  'Fast-moving picks.',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Colors.white.withValues(alpha: 0.86),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 12),
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: const Icon(
-              Icons.bolt_rounded,
-              color: Colors.white,
-              size: 25,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 String _compactSubtitle(String value) {
   final lower = value.toLowerCase();
   if (lower.contains('reconnect')) {
@@ -355,32 +300,6 @@ String _compactSubtitle(String value) {
     return 'Recently checked';
   }
   return value;
-}
-
-class _MiniStatusPill extends StatelessWidget {
-  const _MiniStatusPill({required this.icon, required this.label});
-
-  final IconData icon;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: DealDropPalette.warmSurface,
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14, color: DealDropPalette.mintDeep),
-          const SizedBox(width: 5),
-          Text(label, style: Theme.of(context).textTheme.bodySmall),
-        ],
-      ),
-    );
-  }
 }
 
 class _CountPill extends StatelessWidget {
@@ -420,11 +339,11 @@ class _RoundActionButton extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(18),
       child: Ink(
-        width: 52,
-        height: 52,
+        width: 42,
+        height: 42,
         decoration: BoxDecoration(
           color: DealDropPalette.goldSoft,
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(14),
         ),
         child: Icon(icon, color: DealDropPalette.goldDeep),
       ),
@@ -444,11 +363,11 @@ class _AvatarButton extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(18),
       child: Ink(
-        width: 52,
-        height: 52,
+        width: 42,
+        height: 42,
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(14),
           border: Border.all(color: DealDropPalette.divider),
         ),
         child: Center(

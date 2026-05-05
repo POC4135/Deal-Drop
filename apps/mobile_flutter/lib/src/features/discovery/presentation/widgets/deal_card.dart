@@ -18,177 +18,156 @@ class DealCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final offers = deal.offers.isEmpty
-        ? const <ListingOffer>[]
-        : deal.offers.take(1).toList();
+    final primaryOffer = deal.offers.isEmpty ? null : deal.offers.first;
 
     return Semantics(
       button: true,
       label: '${deal.venueName}, ${deal.title}, ${deal.trustBand.label}',
-      child: GestureDetector(
+      child: InkWell(
         onTap: onTap,
-        child: Container(
+        borderRadius: BorderRadius.circular(16),
+        child: Ink(
+          padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(22),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: DealDropPalette.divider),
             boxShadow: DealDropShadows.card,
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Container(
-                padding: const EdgeInsets.all(14),
+                width: 48,
+                height: 48,
                 decoration: BoxDecoration(
                   color: deal.tone.surfaceTint,
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(22),
-                  ),
+                  borderRadius: BorderRadius.circular(14),
                 ),
-                child: Row(
+                child: Icon(deal.icon, color: deal.tone.accent, size: 24),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      width: 46,
-                      height: 46,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(15),
-                      ),
-                      child: Icon(deal.icon, color: deal.tone.accent, size: 24),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
                             deal.venueName,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: theme.textTheme.titleMedium,
                           ),
-                          const SizedBox(height: 4),
-                          Text(
-                            '${deal.neighborhood} · ${deal.distanceMiles.toStringAsFixed(1)} mi',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: theme.textTheme.bodySmall,
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            deal.title,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: theme.textTheme.titleLarge,
-                          ),
-                        ],
-                      ),
-                    ),
-                    InkWell(
-                      onTap: onSavePressed,
-                      borderRadius: BorderRadius.circular(18),
-                      child: Ink(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(15),
                         ),
-                        child: Icon(
-                          deal.saved
-                              ? Icons.bookmark_rounded
-                              : Icons.bookmark_outline_rounded,
-                          color: deal.saved
-                              ? DealDropPalette.goldDeep
-                              : DealDropPalette.ink,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(14, 14, 14, 13),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: [
-                          _MetaPill(
-                            icon: deal.trustBand.icon,
-                            label: deal.trustBand.shortLabel,
-                            background: deal.trustBand.tint,
-                            foreground: deal.trustBand.foreground,
-                          ),
-                          const SizedBox(width: 7),
-                          _MetaPill(
-                            icon: Icons.schedule_rounded,
-                            label: _compactSchedule(deal.scheduleLabel),
-                            background: DealDropPalette.warmSurface,
-                            foreground: DealDropPalette.body,
-                          ),
-                          const SizedBox(width: 7),
-                          _MetaPill(
-                            icon: Icons.bolt_rounded,
-                            label: '${(deal.confidenceScore * 100).round()}%',
-                            background: Colors.white,
-                            foreground: DealDropPalette.goldDeep,
-                            outlined: true,
-                          ),
-                        ],
-                      ),
-                    ),
-                    if (deal.valueNote.isNotEmpty) ...[
-                      const SizedBox(height: 10),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 11,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: DealDropPalette.cream,
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        child: Text(
-                          deal.valueNote,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: DealDropPalette.ink,
-                          ),
-                        ),
-                      ),
-                    ],
-                    if (offers.isNotEmpty) ...[
-                      const SizedBox(height: 16),
-                      for (var index = 0; index < offers.length; index++) ...[
-                        _OfferRow(offer: offers[index]),
-                        if (index < offers.length - 1)
-                          const Divider(height: 20),
-                      ],
-                    ],
-                    const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            deal.freshnessText,
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: DealDropPalette.body,
-                            ),
-                          ),
-                        ),
+                        const SizedBox(width: 8),
                         Text(
                           deal.affordabilityLabel,
-                          style: theme.textTheme.labelLarge?.copyWith(
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.labelMedium?.copyWith(
                             color: DealDropPalette.goldDeep,
                           ),
                         ),
                       ],
                     ),
+                    const SizedBox(height: 3),
+                    Text(
+                      deal.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: DealDropPalette.ink,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: [
+                        _MetaPill(
+                          icon: deal.trustBand.icon,
+                          label: deal.trustBand.shortLabel,
+                          background: deal.trustBand.tint,
+                          foreground: deal.trustBand.foreground,
+                        ),
+                        _MetaPill(
+                          icon: Icons.schedule_rounded,
+                          label: _compactSchedule(deal.scheduleLabel),
+                          background: DealDropPalette.warmSurface,
+                          foreground: DealDropPalette.body,
+                        ),
+                        _MetaPill(
+                          icon: Icons.place_outlined,
+                          label: '${deal.distanceMiles.toStringAsFixed(1)} mi',
+                          background: Colors.white,
+                          foreground: DealDropPalette.body,
+                          outlined: true,
+                        ),
+                      ],
+                    ),
+                    if (primaryOffer != null) ...[
+                      const SizedBox(height: 9),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              primaryOffer.title,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: DealDropPalette.body,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          _PriceInline(offer: primaryOffer),
+                        ],
+                      ),
+                    ] else if (deal.valueNote.isNotEmpty) ...[
+                      const SizedBox(height: 7),
+                      Text(
+                        deal.valueNote,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.bodySmall,
+                      ),
+                    ],
+                    const SizedBox(height: 6),
+                    Text(
+                      deal.freshnessText,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodySmall,
+                    ),
                   ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              InkWell(
+                onTap: onSavePressed,
+                borderRadius: BorderRadius.circular(14),
+                child: Ink(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    color: deal.saved
+                        ? DealDropPalette.goldSoft
+                        : DealDropPalette.cream,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: DealDropPalette.divider),
+                  ),
+                  child: Icon(
+                    deal.saved
+                        ? Icons.bookmark_rounded
+                        : Icons.bookmark_outline_rounded,
+                    size: 21,
+                    color: deal.saved
+                        ? DealDropPalette.goldDeep
+                        : DealDropPalette.ink,
+                  ),
                 ),
               ),
             ],
@@ -199,22 +178,8 @@ class DealCard extends StatelessWidget {
   }
 }
 
-String _compactSchedule(String value) {
-  final lower = value.toLowerCase();
-  if (lower.contains('live')) {
-    return 'Live now';
-  }
-  if (lower.contains('tonight')) {
-    return 'Tonight';
-  }
-  if (value.length > 18) {
-    return '${value.substring(0, 17)}...';
-  }
-  return value;
-}
-
-class _OfferRow extends StatelessWidget {
-  const _OfferRow({required this.offer});
+class _PriceInline extends StatelessWidget {
+  const _PriceInline({required this.offer});
 
   final ListingOffer offer;
 
@@ -222,33 +187,27 @@ class _OfferRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Row(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Expanded(
-          child: Text(
-            offer.title,
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
         Text(
-          '\$${offer.originalPrice.toStringAsFixed(2)}',
-          style: theme.textTheme.bodyMedium?.copyWith(
+          '\$${offer.originalPrice.toStringAsFixed(0)}',
+          style: theme.textTheme.bodySmall?.copyWith(
             decoration: TextDecoration.lineThrough,
             color: DealDropPalette.muted,
           ),
         ),
-        const SizedBox(width: 10),
+        const SizedBox(width: 5),
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           decoration: BoxDecoration(
             color: const Color(0xFFE7F7EF),
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(999),
           ),
           child: Text(
-            '\$${offer.dealPrice.toStringAsFixed(2)}',
-            style: theme.textTheme.titleMedium?.copyWith(
+            '\$${offer.dealPrice.toStringAsFixed(0)}',
+            style: theme.textTheme.labelMedium?.copyWith(
               color: DealDropPalette.success,
+              fontWeight: FontWeight.w800,
             ),
           ),
         ),
@@ -275,7 +234,7 @@ class _MetaPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
       decoration: BoxDecoration(
         color: background,
         borderRadius: BorderRadius.circular(999),
@@ -284,8 +243,8 @@ class _MetaPill extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 14, color: foreground),
-          const SizedBox(width: 5),
+          Icon(icon, size: 12, color: foreground),
+          const SizedBox(width: 4),
           Text(
             label,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -297,4 +256,18 @@ class _MetaPill extends StatelessWidget {
       ),
     );
   }
+}
+
+String _compactSchedule(String value) {
+  final lower = value.toLowerCase();
+  if (lower.contains('live')) {
+    return 'Live';
+  }
+  if (lower.contains('tonight')) {
+    return 'Tonight';
+  }
+  if (value.length > 15) {
+    return '${value.substring(0, 14)}...';
+  }
+  return value;
 }

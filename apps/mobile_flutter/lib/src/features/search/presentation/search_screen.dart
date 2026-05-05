@@ -46,7 +46,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     return Scaffold(
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+          padding: const EdgeInsets.fromLTRB(16, 10, 16, 20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -56,11 +56,11 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                     onTap: () => context.pop(),
                     borderRadius: BorderRadius.circular(16),
                     child: Ink(
-                      width: 48,
-                      height: 48,
+                      width: 42,
+                      height: 42,
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(14),
                         border: Border.all(color: DealDropPalette.divider),
                       ),
                       child: const Icon(Icons.arrow_back_rounded),
@@ -89,11 +89,11 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                     onTap: () => _showFilters(context, filters),
                     borderRadius: BorderRadius.circular(16),
                     child: Ink(
-                      width: 48,
-                      height: 48,
+                      width: 42,
+                      height: 42,
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(14),
                         border: Border.all(color: DealDropPalette.divider),
                       ),
                       child: const Icon(Icons.tune_rounded),
@@ -101,7 +101,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 10),
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
@@ -124,7 +124,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                     ),
                 ],
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 8),
               if (_loading)
                 const Expanded(
                   child: Center(child: CircularProgressIndicator()),
@@ -193,7 +193,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                       ],
                       ...(_result?.listings ?? const <Deal>[]).map(
                         (deal) => Padding(
-                          padding: const EdgeInsets.only(bottom: 18),
+                          padding: const EdgeInsets.only(bottom: 10),
                           child: DealCard(
                             deal: deal,
                             onTap: () => context.push('/listing/${deal.id}'),
@@ -287,7 +287,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         return StatefulBuilder(
           builder: (context, setModalState) {
             return Padding(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 20),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,

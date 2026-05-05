@@ -21,35 +21,36 @@ class DealDropBottomNav extends StatelessWidget {
     ];
 
     return SafeArea(
-      minimum: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+      minimum: const EdgeInsets.fromLTRB(12, 0, 12, 10),
       child: DecoratedBox(
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(28),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: DealDropPalette.divider),
           boxShadow: DealDropShadows.soft,
         ),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
           child: Row(
             children: [
               for (var index = 0; index < items.length; index++)
                 Expanded(
                   child: InkWell(
-                    borderRadius: BorderRadius.circular(22),
+                    borderRadius: BorderRadius.circular(14),
                     onTap: () => onTap(index),
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      padding: const EdgeInsets.symmetric(vertical: 6),
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           AnimatedContainer(
                             duration: const Duration(milliseconds: 180),
-                            padding: const EdgeInsets.all(12),
+                            padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
                               color: index == currentIndex
                                   ? DealDropPalette.goldSoft
                                   : Colors.transparent,
-                              borderRadius: BorderRadius.circular(18),
+                              borderRadius: BorderRadius.circular(12),
                             ),
                             child: Icon(
                               items[index].icon,
@@ -58,7 +59,7 @@ class DealDropBottomNav extends StatelessWidget {
                                   : DealDropPalette.muted,
                             ),
                           ),
-                          const SizedBox(height: 6),
+                          const SizedBox(height: 3),
                           Text(
                             items[index].label,
                             style: Theme.of(context).textTheme.bodySmall
