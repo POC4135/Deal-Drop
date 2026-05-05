@@ -38,7 +38,10 @@ class SavedScreen extends ConsumerWidget {
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: Text('Saved deals', style: Theme.of(context).textTheme.headlineMedium),
+                    child: Text(
+                      'Saved deals',
+                      style: Theme.of(context).textTheme.headlineMedium,
+                    ),
                   ),
                 ],
               ),
@@ -77,7 +80,9 @@ class SavedScreen extends ConsumerWidget {
                           deal: deal.copyWith(saved: true),
                           onTap: () => context.push('/listing/${deal.id}'),
                           onSavePressed: () async {
-                            await ref.read(repositoryProvider).toggleFavorite(deal.id, save: false);
+                            await ref
+                                .read(repositoryProvider)
+                                .toggleFavorite(deal.id, save: false);
                             ref.invalidate(savedDealsProvider);
                             ref.invalidate(savedIdsProvider);
                           },
@@ -86,7 +91,8 @@ class SavedScreen extends ConsumerWidget {
                     );
                   },
                   error: (error, _) => Center(child: Text('$error')),
-                  loading: () => const Center(child: CircularProgressIndicator()),
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator()),
                 ),
               ),
             ],

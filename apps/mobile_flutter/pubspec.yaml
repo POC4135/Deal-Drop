@@ -43,6 +43,12 @@ dependencies:
   url_launcher: ^6.3.1
   dealdrop_design_tokens:
     path: ../../packages/design_tokens
+  firebase_core: ^4.7.0
+  firebase_messaging: ^16.2.0
+  flutter_local_notifications: ^21.0.0
+  flutter_secure_storage: ^10.0.0
+  google_maps: ^8.2.0
+  web: ^1.1.1
 
 dev_dependencies:
   flutter_test:

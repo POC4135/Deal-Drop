@@ -40,10 +40,31 @@ class SeedKarmaRepository {
         ),
       ],
       leaderboard: [
-        LeaderboardEntry(rank: 12, name: 'Joon Choi', title: 'Rising Star', points: 8340, isCurrentUser: true),
-        LeaderboardEntry(rank: 1, name: 'Sarah Chen', title: 'Deal Master', points: 14820),
-        LeaderboardEntry(rank: 2, name: 'Marcus Johnson', title: 'Eco Scout', points: 12100),
-        LeaderboardEntry(rank: 3, name: 'Alex Rivera', title: 'Local Legend', points: 11540),
+        LeaderboardEntry(
+          rank: 12,
+          name: 'Joon Choi',
+          title: 'Rising Star',
+          points: 8340,
+          isCurrentUser: true,
+        ),
+        LeaderboardEntry(
+          rank: 1,
+          name: 'Sarah Chen',
+          title: 'Deal Master',
+          points: 14820,
+        ),
+        LeaderboardEntry(
+          rank: 2,
+          name: 'Marcus Johnson',
+          title: 'Eco Scout',
+          points: 12100,
+        ),
+        LeaderboardEntry(
+          rank: 3,
+          name: 'Alex Rivera',
+          title: 'Local Legend',
+          points: 11540,
+        ),
       ],
     );
   }

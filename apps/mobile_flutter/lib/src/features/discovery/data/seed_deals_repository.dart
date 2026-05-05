@@ -31,9 +31,21 @@ class SeedDealsRepository implements DealsRepository {
         mapDy: 0.24,
         icon: Icons.local_dining_rounded,
         offers: [
-          DealOffer(title: 'Taco Tuesday Special', originalPrice: 9.99, dealPrice: 4.99),
-          DealOffer(title: 'Burrito Bowl Combo', originalPrice: 13.99, dealPrice: 7.99),
-          DealOffer(title: 'Horchata Add-on', originalPrice: 4.50, dealPrice: 2.50),
+          DealOffer(
+            title: 'Taco Tuesday Special',
+            originalPrice: 9.99,
+            dealPrice: 4.99,
+          ),
+          DealOffer(
+            title: 'Burrito Bowl Combo',
+            originalPrice: 13.99,
+            dealPrice: 7.99,
+          ),
+          DealOffer(
+            title: 'Horchata Add-on',
+            originalPrice: 4.50,
+            dealPrice: 2.50,
+          ),
         ],
       ),
       Deal(
@@ -57,8 +69,16 @@ class SeedDealsRepository implements DealsRepository {
         mapDy: 0.34,
         icon: Icons.ramen_dining_rounded,
         offers: [
-          DealOffer(title: 'Tonkotsu Ramen', originalPrice: 14.99, dealPrice: 8.99),
-          DealOffer(title: 'Bento Box Lunch', originalPrice: 17.99, dealPrice: 10.99),
+          DealOffer(
+            title: 'Tonkotsu Ramen',
+            originalPrice: 14.99,
+            dealPrice: 8.99,
+          ),
+          DealOffer(
+            title: 'Bento Box Lunch',
+            originalPrice: 17.99,
+            dealPrice: 10.99,
+          ),
         ],
       ),
       Deal(
@@ -76,14 +96,23 @@ class SeedDealsRepository implements DealsRepository {
         lastUpdatedText: 'Yesterday at 8:07 PM',
         conditions: 'Applies to cheese or pepperoni slices only.',
         valueNote: 'Fast pickup option near Beltline traffic.',
-        sourceNote: 'Recently updated via public specials post and staff review.',
+        sourceNote:
+            'Recently updated via public specials post and staff review.',
         tone: DealTone.sky,
         mapDx: 0.47,
         mapDy: 0.58,
         icon: Icons.local_pizza_rounded,
         offers: [
-          DealOffer(title: 'Slice + Drink', originalPrice: 8.50, dealPrice: 5.00),
-          DealOffer(title: '2 Slice Combo', originalPrice: 12.00, dealPrice: 7.50),
+          DealOffer(
+            title: 'Slice + Drink',
+            originalPrice: 8.50,
+            dealPrice: 5.00,
+          ),
+          DealOffer(
+            title: '2 Slice Combo',
+            originalPrice: 12.00,
+            dealPrice: 7.50,
+          ),
         ],
       ),
       Deal(
@@ -101,14 +130,19 @@ class SeedDealsRepository implements DealsRepository {
         lastUpdatedText: 'Today at 3:26 PM',
         conditions: 'Limit four tacos per guest.',
         valueNote: 'Excellent quick group stop close to campus density.',
-        sourceNote: 'Multiple weighted confirmations plus historical stability.',
+        sourceNote:
+            'Multiple weighted confirmations plus historical stability.',
         tone: DealTone.gold,
         mapDx: 0.27,
         mapDy: 0.46,
         icon: Icons.tapas_rounded,
         offers: [
           DealOffer(title: 'Any Taco', originalPrice: 4.50, dealPrice: 2.00),
-          DealOffer(title: 'Chips + Queso', originalPrice: 6.50, dealPrice: 4.00),
+          DealOffer(
+            title: 'Chips + Queso',
+            originalPrice: 6.50,
+            dealPrice: 4.00,
+          ),
         ],
       ),
       Deal(
@@ -132,7 +166,11 @@ class SeedDealsRepository implements DealsRepository {
         mapDy: 0.72,
         icon: Icons.soup_kitchen_rounded,
         offers: [
-          DealOffer(title: 'Signature Bowl + Gyoza', originalPrice: 18.00, dealPrice: 12.00),
+          DealOffer(
+            title: 'Signature Bowl + Gyoza',
+            originalPrice: 18.00,
+            dealPrice: 12.00,
+          ),
         ],
       ),
       Deal(
@@ -156,7 +194,11 @@ class SeedDealsRepository implements DealsRepository {
         mapDy: 0.19,
         icon: Icons.local_pizza_outlined,
         offers: [
-          DealOffer(title: 'Large Pizza BOGO', originalPrice: 22.00, dealPrice: 11.00),
+          DealOffer(
+            title: 'Large Pizza BOGO',
+            originalPrice: 22.00,
+            dealPrice: 11.00,
+          ),
         ],
       ),
     ];

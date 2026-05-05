@@ -8,6 +8,7 @@ import 'api_client.dart';
 import 'app_config.dart';
 import 'dealdrop_repository.dart';
 import 'local_store.dart';
+import 'push_notification_service.dart';
 
 final sharedPreferencesProvider = Provider<SharedPreferences>((ref) {
   throw UnimplementedError(
@@ -45,6 +46,15 @@ final repositoryProvider = Provider<DealDropRepository>((ref) {
     localStore: ref.watch(localStoreProvider),
     analytics: ref.watch(analyticsServiceProvider),
     config: ref.watch(appConfigProvider),
+  );
+});
+
+final pushNotificationServiceProvider = Provider<PushNotificationService>((
+  ref,
+) {
+  return PushNotificationService(
+    repository: ref.watch(repositoryProvider),
+    localStore: ref.watch(localStoreProvider),
   );
 });
 
@@ -92,6 +102,7 @@ class AuthController extends AsyncNotifier<AuthState> {
     if (session == null) {
       return const AuthState(initialized: true, isGuest: true);
     }
+    await ref.read(pushNotificationServiceProvider).registerCurrentDevice();
     try {
       final profile = await repository.fetchProfile();
       return AuthState(
@@ -115,6 +126,7 @@ class AuthController extends AsyncNotifier<AuthState> {
       final payload = await ref
           .read(repositoryProvider)
           .signIn(email: email, password: password);
+      await ref.read(pushNotificationServiceProvider).registerCurrentDevice();
       return AuthState(
         initialized: true,
         isGuest: false,
@@ -144,6 +156,7 @@ class AuthController extends AsyncNotifier<AuthState> {
             displayName: displayName,
             homeNeighborhood: homeNeighborhood,
           );
+      await ref.read(pushNotificationServiceProvider).registerCurrentDevice();
       return AuthState(
         initialized: true,
         isGuest: false,
@@ -158,6 +171,7 @@ class AuthController extends AsyncNotifier<AuthState> {
   }
 
   Future<void> signOut() async {
+    await ref.read(pushNotificationServiceProvider).unregisterCurrentDevice();
     await ref.read(repositoryProvider).signOut();
     state = const AsyncData(AuthState(initialized: true, isGuest: true));
   }

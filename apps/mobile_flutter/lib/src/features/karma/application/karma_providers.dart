@@ -16,6 +16,7 @@ final leaderboardProvider = FutureProvider<LeaderboardPayload>((ref) {
   return ref.watch(repositoryProvider).fetchLeaderboard(window: window);
 });
 
-final contributionHistoryProvider = FutureProvider<List<ContributionRecordModel>>((ref) {
-  return ref.watch(repositoryProvider).fetchContributions();
-});
+final contributionHistoryProvider =
+    FutureProvider<List<ContributionRecordModel>>((ref) {
+      return ref.watch(repositoryProvider).fetchContributions();
+    });

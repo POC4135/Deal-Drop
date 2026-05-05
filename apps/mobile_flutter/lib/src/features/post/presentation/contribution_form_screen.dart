@@ -589,6 +589,7 @@ class _ContributionFormScreenState
     _debounce = Timer(const Duration(milliseconds: 250), () async {
       setState(() {
         _venueSearching = true;
+        _error = null;
       });
       try {
         final predictions = await _googlePlacesService.searchPlaces(normalized);
@@ -600,6 +601,16 @@ class _ContributionFormScreenState
           _error = predictions.isEmpty
               ? 'No Google Maps venues found. Check the name or API key.'
               : null;
+        });
+      } catch (error) {
+        if (!mounted) {
+          return;
+        }
+        setState(() {
+          _venuePredictions = const [];
+          _error = _googlePlacesService.available
+              ? 'Unable to search Google Maps venues right now.'
+              : 'Google Maps venue search needs GOOGLE_MAPS_API_KEY in this build.';
         });
       } finally {
         if (mounted) {
@@ -616,28 +627,38 @@ class _ContributionFormScreenState
       _venueSearching = true;
       _error = null;
     });
-    final details = await _googlePlacesService.fetchPlaceDetails(
-      prediction.placeId,
-    );
-    if (!mounted) {
-      return;
-    }
-    if (details == null) {
+    try {
+      final details = await _googlePlacesService.fetchPlaceDetails(
+        prediction.placeId,
+      );
+      if (!mounted) {
+        return;
+      }
+      if (details == null) {
+        setState(() {
+          _venueSearching = false;
+          _error = 'Unable to load Google Maps details for this venue.';
+        });
+        return;
+      }
+      setState(() {
+        _selectedGooglePlace = details;
+        _venueController.text = details.name;
+        _venuePredictions = const [];
+        _venueSearching = false;
+        if (details.formattedAddress.isNotEmpty) {
+          _neighborhoodController.text = _inferArea(details.formattedAddress);
+        }
+      });
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
       setState(() {
         _venueSearching = false;
         _error = 'Unable to load Google Maps details for this venue.';
       });
-      return;
     }
-    setState(() {
-      _selectedGooglePlace = details;
-      _venueController.text = details.name;
-      _venuePredictions = const [];
-      _venueSearching = false;
-      if (details.formattedAddress.isNotEmpty) {
-        _neighborhoodController.text = _inferArea(details.formattedAddress);
-      }
-    });
   }
 
   String _inferArea(String address) {

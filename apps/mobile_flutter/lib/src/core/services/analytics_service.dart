@@ -23,7 +23,11 @@ class AnalyticsService {
       'properties': properties,
     };
     _buffer.add(event);
-    developer.log('analytics:$name', name: 'dealdrop.analytics', error: properties);
+    developer.log(
+      'analytics:$name',
+      name: 'dealdrop.analytics',
+      error: properties,
+    );
     if (_buffer.length >= 6 || kDebugMode) {
       await flush();
     }
@@ -36,10 +40,7 @@ class AnalyticsService {
     final payload = List<Map<String, dynamic>>.from(_buffer);
     _buffer.clear();
     try {
-      await _client.postJson(
-        '/v1/telemetry/events',
-        body: {'events': payload},
-      );
+      await _client.postJson('/v1/telemetry/events', body: {'events': payload});
     } on ApiException {
       _buffer.insertAll(0, payload);
     }

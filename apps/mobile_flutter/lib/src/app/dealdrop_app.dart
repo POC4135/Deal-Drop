@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -12,16 +14,24 @@ class DealDropApp extends ConsumerStatefulWidget {
   ConsumerState<DealDropApp> createState() => _DealDropAppState();
 }
 
-class _DealDropAppState extends ConsumerState<DealDropApp> with WidgetsBindingObserver {
+class _DealDropAppState extends ConsumerState<DealDropApp>
+    with WidgetsBindingObserver {
+  StreamSubscription<String>? _pushDeepLinkSubscription;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _pushDeepLinkSubscription = ref
+        .read(pushNotificationServiceProvider)
+        .deepLinks
+        .listen(_openPushDeepLink);
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _pushDeepLinkSubscription?.cancel();
     super.dispose();
   }
 
@@ -30,6 +40,7 @@ class _DealDropAppState extends ConsumerState<DealDropApp> with WidgetsBindingOb
     if (state == AppLifecycleState.resumed) {
       ref.read(repositoryProvider).flushOfflineQueue();
       ref.read(authControllerProvider.notifier).refreshProfile();
+      ref.read(pushNotificationServiceProvider).registerCurrentDevice();
       ref.read(analyticsServiceProvider).flush();
     }
   }
@@ -43,5 +54,12 @@ class _DealDropAppState extends ConsumerState<DealDropApp> with WidgetsBindingOb
       routerConfig: router,
       theme: buildDealDropTheme(),
     );
+  }
+
+  void _openPushDeepLink(String deepLink) {
+    if (!mounted || !deepLink.startsWith('/')) {
+      return;
+    }
+    ref.read(appRouterProvider).go(deepLink);
   }
 }

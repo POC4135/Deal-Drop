@@ -61,7 +61,8 @@ class DealDropBottomNav extends StatelessWidget {
                           const SizedBox(height: 6),
                           Text(
                             items[index].label,
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
                                   color: index == currentIndex
                                       ? DealDropPalette.goldDeep
                                       : DealDropPalette.muted,

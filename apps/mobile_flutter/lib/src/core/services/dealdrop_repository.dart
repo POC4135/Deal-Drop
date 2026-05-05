@@ -719,6 +719,13 @@ class DealDropRepository {
     );
   }
 
+  Future<void> unregisterDevice({required String deviceId}) async {
+    if (!isAuthenticated) {
+      return;
+    }
+    await _apiClient.delete('/v1/devices/$deviceId', authenticated: true);
+  }
+
   Future<SubmissionOutcome> _submitContribution({
     required String type,
     required Future<Map<String, dynamic>> Function() onlineCall,

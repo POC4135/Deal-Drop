@@ -67,52 +67,52 @@ class Deal {
 
 extension DiscoveryFilterX on DiscoveryFilter {
   String get label => switch (this) {
-        DiscoveryFilter.all => 'All',
-        DiscoveryFilter.nearMe => 'Near Me',
-        DiscoveryFilter.topRated => 'Top Rated',
-        DiscoveryFilter.fresh => 'New',
-      };
+    DiscoveryFilter.all => 'All',
+    DiscoveryFilter.nearMe => 'Near Me',
+    DiscoveryFilter.topRated => 'Top Rated',
+    DiscoveryFilter.fresh => 'New',
+  };
 }
 
 extension DealToneX on DealTone {
   Color get surfaceTint => switch (this) {
-        DealTone.peach => DealDropPalette.coral,
-        DealTone.rose => DealDropPalette.rose,
-        DealTone.sky => DealDropPalette.sky,
-        DealTone.mint => const Color(0xFFDDF7EE),
-        DealTone.gold => DealDropPalette.goldSoft,
-        DealTone.lilac => DealDropPalette.lilac,
-      };
+    DealTone.peach => DealDropPalette.coral,
+    DealTone.rose => DealDropPalette.rose,
+    DealTone.sky => DealDropPalette.sky,
+    DealTone.mint => const Color(0xFFDDF7EE),
+    DealTone.gold => DealDropPalette.goldSoft,
+    DealTone.lilac => DealDropPalette.lilac,
+  };
 
   Color get accent => switch (this) {
-        DealTone.peach => DealDropPalette.warning,
-        DealTone.rose => const Color(0xFFC26A7A),
-        DealTone.sky => const Color(0xFF2D7EEA),
-        DealTone.mint => DealDropPalette.mintDeep,
-        DealTone.gold => DealDropPalette.goldDeep,
-        DealTone.lilac => const Color(0xFF7D63D7),
-      };
+    DealTone.peach => DealDropPalette.warning,
+    DealTone.rose => const Color(0xFFC26A7A),
+    DealTone.sky => const Color(0xFF2D7EEA),
+    DealTone.mint => DealDropPalette.mintDeep,
+    DealTone.gold => DealDropPalette.goldDeep,
+    DealTone.lilac => const Color(0xFF7D63D7),
+  };
 }
 
 extension TrustBandX on TrustBand {
   String get label => switch (this) {
-        TrustBand.founderVerified => 'Founder verified',
-        TrustBand.userConfirmed => 'User confirmed',
-        TrustBand.recentlyUpdated => 'Recently updated',
-        TrustBand.needsRecheck => 'Needs recheck',
-      };
+    TrustBand.founderVerified => 'Founder verified',
+    TrustBand.userConfirmed => 'User confirmed',
+    TrustBand.recentlyUpdated => 'Recently updated',
+    TrustBand.needsRecheck => 'Needs recheck',
+  };
 
   Color get tint => switch (this) {
-        TrustBand.founderVerified => DealDropPalette.goldSoft,
-        TrustBand.userConfirmed => const Color(0xFFDDF7EE),
-        TrustBand.recentlyUpdated => DealDropPalette.sky,
-        TrustBand.needsRecheck => const Color(0xFFFFE5CC),
-      };
+    TrustBand.founderVerified => DealDropPalette.goldSoft,
+    TrustBand.userConfirmed => const Color(0xFFDDF7EE),
+    TrustBand.recentlyUpdated => DealDropPalette.sky,
+    TrustBand.needsRecheck => const Color(0xFFFFE5CC),
+  };
 
   Color get foreground => switch (this) {
-        TrustBand.founderVerified => DealDropPalette.goldDeep,
-        TrustBand.userConfirmed => DealDropPalette.success,
-        TrustBand.recentlyUpdated => const Color(0xFF2D7EEA),
-        TrustBand.needsRecheck => DealDropPalette.warning,
-      };
+    TrustBand.founderVerified => DealDropPalette.goldDeep,
+    TrustBand.userConfirmed => DealDropPalette.success,
+    TrustBand.recentlyUpdated => const Color(0xFF2D7EEA),
+    TrustBand.needsRecheck => DealDropPalette.warning,
+  };
 }

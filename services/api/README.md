@@ -20,7 +20,7 @@ Fastify modular monolith for the DealDrop platform foundation.
 - Fastify HTTP layer
 - Drizzle schema plus additive SQL migrations in `migrations/`
 - selectable platform backend: `PLATFORM_BACKEND=seed` for local contract tests, `PLATFORM_BACKEND=postgres` for Supabase Postgres
-- Supabase Auth JWT verification, Supabase Storage proof-upload slots, Postgres outbox workers, and Render-oriented deployment envs
+- Supabase Auth JWT verification, Supabase Storage proof-upload slots, Firebase Cloud Messaging delivery, Postgres outbox workers, and Render-oriented deployment envs
 
 ## Auth note
 
@@ -37,7 +37,6 @@ The local seed auth flow is still available only when `USE_DEV_AUTH=true`.
 
 - validate all Postgres repository paths against the live Supabase staging database
 - replace the signed-upload placeholder URL with a service-role Supabase Storage signed-upload call
-- connect notification worker credentials to real FCM/APNs projects
 - add rate limiting and abuse controls around auth-adjacent and contribution endpoints
 - run the Node.js, worker, and migration test suites once `node`/`pnpm` are installed in the workspace
 
