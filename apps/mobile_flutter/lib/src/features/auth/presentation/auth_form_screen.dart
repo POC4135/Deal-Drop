@@ -49,15 +49,13 @@ class _AuthFormScreenState extends ConsumerState<AuthFormScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final title = _signIn ? 'Sign in' : 'Create your account';
-    final subtitle = _signIn
-        ? 'Pick up where you left off and sync your local saves.'
-        : 'Create an account to contribute, save permanently, and earn Karma.';
+    final title = _signIn ? 'Sign in' : 'Create account';
+    final subtitle = _signIn ? 'Sync saves.' : 'Save deals. Earn Karma.';
 
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
+          padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
           child: Form(
             key: _formKey,
             child: Column(
@@ -69,8 +67,8 @@ class _AuthFormScreenState extends ConsumerState<AuthFormScreen> {
                       onTap: () => context.pop(),
                       borderRadius: BorderRadius.circular(16),
                       child: Ink(
-                        width: 48,
-                        height: 48,
+                        width: 42,
+                        height: 42,
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(16),
@@ -79,7 +77,7 @@ class _AuthFormScreenState extends ConsumerState<AuthFormScreen> {
                         child: const Icon(Icons.arrow_back_rounded),
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 10),
                     Text(
                       'DealDrop',
                       style: Theme.of(context).textTheme.headlineMedium
@@ -87,14 +85,14 @@ class _AuthFormScreenState extends ConsumerState<AuthFormScreen> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 28),
+                const SizedBox(height: 22),
                 Text(title, style: Theme.of(context).textTheme.displayMedium),
-                const SizedBox(height: 12),
-                Text(subtitle, style: Theme.of(context).textTheme.bodyLarge),
-                const SizedBox(height: 28),
+                const SizedBox(height: 8),
+                _AuthSubtitleChip(text: subtitle),
+                const SizedBox(height: 22),
                 if (!_signIn) ...[
                   _FieldLabel('Display name'),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 8),
                   TextFormField(
                     controller: _displayNameController,
                     textInputAction: TextInputAction.next,
@@ -112,9 +110,9 @@ class _AuthFormScreenState extends ConsumerState<AuthFormScreen> {
                       hintText: 'How people will see you',
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 14),
                   _FieldLabel('Home neighborhood'),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 8),
                   TextFormField(
                     controller: _neighborhoodController,
                     textInputAction: TextInputAction.next,
@@ -132,10 +130,10 @@ class _AuthFormScreenState extends ConsumerState<AuthFormScreen> {
                       hintText: 'Midtown, West Midtown, Ponce...',
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 14),
                 ],
                 _FieldLabel('Email'),
-                const SizedBox(height: 10),
+                const SizedBox(height: 8),
                 TextFormField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
@@ -152,9 +150,9 @@ class _AuthFormScreenState extends ConsumerState<AuthFormScreen> {
                     hintText: 'you@email.com',
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 14),
                 _FieldLabel('Password'),
-                const SizedBox(height: 10),
+                const SizedBox(height: 8),
                 TextFormField(
                   controller: _passwordController,
                   obscureText: true,
@@ -186,7 +184,7 @@ class _AuthFormScreenState extends ConsumerState<AuthFormScreen> {
                     ),
                   ),
                 ],
-                const SizedBox(height: 26),
+                const SizedBox(height: 22),
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
@@ -198,12 +196,12 @@ class _AuthFormScreenState extends ConsumerState<AuthFormScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
                 Center(
                   child: Text(
                     _signIn
-                        ? 'Your guest saves will merge after sign in.'
-                        : 'We use your neighborhood to keep the feed locally relevant.',
+                        ? 'Guest saves merge after sign in.'
+                        : 'Neighborhood keeps the feed local.',
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
@@ -292,6 +290,24 @@ class _FieldLabel extends StatelessWidget {
     return Text(
       label.toUpperCase(),
       style: Theme.of(context).textTheme.labelMedium,
+    );
+  }
+}
+
+class _AuthSubtitleChip extends StatelessWidget {
+  const _AuthSubtitleChip({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
+      decoration: BoxDecoration(
+        color: DealDropPalette.warmSurface,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(text, style: Theme.of(context).textTheme.bodySmall),
     );
   }
 }

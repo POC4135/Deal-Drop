@@ -257,6 +257,23 @@ export const filtersMetadataSchema = z.object({
 });
 export type FiltersMetadata = z.infer<typeof filtersMetadataSchema>;
 
+export const googlePlaceMetadataSchema = z.object({
+  placeId: z.string(),
+  name: z.string(),
+  formattedAddress: z.string().optional(),
+  latitude: z.number().optional(),
+  longitude: z.number().optional(),
+  types: z.array(z.string()).default([]),
+  website: z.string().optional(),
+  phoneNumber: z.string().optional(),
+  googleMapsUrl: z.string().optional(),
+  rating: z.number().optional(),
+  userRatingsTotal: z.number().optional(),
+  businessStatus: z.string().optional(),
+  raw: z.record(z.any()).default({}),
+});
+export type GooglePlaceMetadata = z.infer<typeof googlePlaceMetadataSchema>;
+
 export const contributionCreateSchema = z.object({
   venueName: z.string(),
   neighborhood: z.string(),
@@ -268,6 +285,7 @@ export const contributionCreateSchema = z.object({
   scheduleSummary: z.string(),
   tags: z.array(z.string()).default([]),
   proofAssetKeys: z.array(z.string()).default([]),
+  googlePlace: googlePlaceMetadataSchema.optional(),
 });
 export type ContributionCreate = z.infer<typeof contributionCreateSchema>;
 

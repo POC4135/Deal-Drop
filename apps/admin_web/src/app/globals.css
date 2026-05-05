@@ -3,25 +3,30 @@
 @tailwind utilities;
 
 :root {
-  --bg: #f7f3ea;
-  --panel: #fffdf9;
-  --panel-strong: #f2e8d7;
-  --ink: #1d1710;
-  --body: #615646;
-  --muted: #958672;
-  --line: #e4d7c1;
-  --accent: #aa6e00;
-  --accent-soft: #fff0cc;
-  --success: #176b4f;
-  --warn: #bc5f1d;
-  --rose: #f5d7dc;
+  --bg: #f6f8f2;
+  --panel: #ffffff;
+  --panel-strong: #edf6ed;
+  --ink: #17211b;
+  --body: #526159;
+  --muted: #829086;
+  --line: #dbe7d8;
+  --accent: #e75132;
+  --accent-strong: #bd321d;
+  --accent-soft: #ffe7dc;
+  --success: #147a4a;
+  --success-soft: #ddf5e4;
+  --warn: #d96424;
+  --rose: #ffdde5;
 }
 
 html,
 body {
   margin: 0;
   padding: 0;
-  background: radial-gradient(circle at top left, #fff7e6 0%, var(--bg) 45%, #efe6d7 100%);
+  background:
+    radial-gradient(circle at 14% 0%, #ffe8dc 0%, rgba(255, 232, 220, 0) 34%),
+    radial-gradient(circle at 88% 14%, #dff4e2 0%, rgba(223, 244, 226, 0) 38%),
+    linear-gradient(135deg, #fbfaf4 0%, var(--bg) 54%, #eef6ee 100%);
   color: var(--ink);
   font-family: "Atkinson Hyperlegible", "Segoe UI", sans-serif;
 }
@@ -50,8 +55,8 @@ select {
 
 .admin-sidebar {
   border-right: 1px solid var(--line);
-  background: rgba(255, 251, 244, 0.84);
-  backdrop-filter: blur(16px);
+  background: rgba(255, 255, 255, 0.76);
+  backdrop-filter: blur(18px);
   padding: 28px 22px;
 }
 
@@ -62,8 +67,8 @@ select {
 .panel {
   background: var(--panel);
   border: 1px solid var(--line);
-  border-radius: 28px;
-  box-shadow: 0 12px 28px rgba(30, 23, 17, 0.06);
+  border-radius: 10px;
+  box-shadow: 0 18px 44px rgba(23, 33, 27, 0.08);
 }
 
 .pill {
@@ -78,4 +83,35 @@ select {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
+}
+
+.panel input,
+.panel textarea,
+.panel select {
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    background-color 160ms ease;
+}
+
+.panel input:focus,
+.panel textarea:focus,
+.panel select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px rgba(231, 81, 50, 0.12);
+}
+
+button,
+a {
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+button:hover,
+a:hover {
+  transform: translateY(-1px);
 }

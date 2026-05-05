@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'src/app/dealdrop_app.dart';
 import 'src/core/services/app_config.dart';
 import 'src/core/services/app_providers.dart';
+import 'src/core/services/google_maps_loader.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -17,6 +18,7 @@ Future<void> main() async {
       anonKey: config.supabasePublishableKey,
     );
   }
+  await ensureGoogleMapsLoaded(config);
   runApp(
     ProviderScope(
       overrides: [

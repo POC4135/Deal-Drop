@@ -9,7 +9,7 @@ export default async function ListingsPage() {
   return (
     <AdminShell eyebrow="Catalog" title="Listings">
       <div className="mb-6 flex justify-end">
-        <Link href="/listings/new" className="rounded-full bg-amber-600 px-5 py-3 text-sm font-semibold text-white">
+        <Link href="/listings/new" className="rounded-full bg-[var(--accent)] px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-[var(--accent-strong)]">
           Create listing
         </Link>
       </div>
@@ -26,7 +26,7 @@ export default async function ListingsPage() {
             {listing.trustBand.replace(/_/g, ' ')}
           </span>,
           <span key={`${listing.id}-score`}>{Math.round(listing.confidenceScore * 100)}%</span>,
-          <Link key={`${listing.id}-detail`} href={`/listings/${listing.id}`} className="font-semibold text-amber-700">
+          <Link key={`${listing.id}-detail`} href={`/listings/${listing.id}`} className="font-semibold text-[var(--accent)]">
             Open
           </Link>,
         ])}

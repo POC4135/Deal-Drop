@@ -13,13 +13,13 @@ export default function LoginPage() {
             <label key={label} className="block">
               <span className="mb-2 block text-sm font-semibold text-[var(--body)]">{label}</span>
               <input
-                className="w-full rounded-[20px] border border-[var(--line)] bg-white px-4 py-3 outline-none"
+                className="w-full rounded-lg border border-[var(--line)] bg-white px-4 py-3 outline-none"
                 placeholder={label}
                 type={label === 'Password' ? 'password' : 'email'}
               />
             </label>
           ))}
-          <button className="rounded-full bg-amber-600 px-5 py-3 text-sm font-semibold text-white">Enter admin</button>
+          <button className="rounded-full bg-[var(--accent)] px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-[var(--accent-strong)]">Enter admin</button>
         </form>
       </section>
     </AdminShell>

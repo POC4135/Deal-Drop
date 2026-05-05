@@ -37,7 +37,7 @@ export default async function DashboardPage() {
               {listing.trustBand.replace(/_/g, ' ')}
             </span>,
             <span key={`${listing.id}-fresh`}>{listing.freshnessText}</span>,
-            <Link key={`${listing.id}-link`} href={`/listings/${listing.id}`} className="font-semibold text-amber-700">
+            <Link key={`${listing.id}-link`} href={`/listings/${listing.id}`} className="font-semibold text-[var(--accent)]">
               Review
             </Link>,
           ])}
@@ -49,13 +49,13 @@ export default async function DashboardPage() {
           <p className="mt-3 text-sm leading-6 text-[var(--body)]">
             Higher-trust contributors are currently carrying 61% of successful freshness confirmations.
           </p>
-          <div className="mt-8 rounded-[24px] bg-[var(--panel-strong)] p-5">
+          <div className="mt-8 rounded-lg bg-[var(--panel-strong)] p-5">
             <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--muted)]">Queue SLA</p>
             <p className="mt-2 text-2xl font-semibold">12m median review time</p>
           </div>
           <div className="mt-6 space-y-3">
             {moderationQueue.map((item) => (
-              <div key={item.id} className="rounded-[20px] border border-[var(--line)] bg-white px-4 py-3">
+              <div key={item.id} className="rounded-lg border border-[var(--line)] bg-white px-4 py-3">
                 <p className="font-semibold">{item.title}</p>
                 <p className="mt-1 text-sm text-[var(--body)]">{item.subtitle}</p>
               </div>

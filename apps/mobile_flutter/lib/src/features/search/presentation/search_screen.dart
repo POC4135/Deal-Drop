@@ -4,6 +4,7 @@ import 'package:dealdrop_design_tokens/dealdrop_design_tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/models/app_models.dart';
 import '../../../core/services/app_providers.dart';
@@ -138,9 +139,27 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                   _controller.text.trim().isNotEmpty)
                 Expanded(
                   child: Center(
-                    child: Text(
-                      'No results for "${_controller.text.trim()}". Try another neighborhood or clear filters.',
-                      textAlign: TextAlign.center,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'No DealDrop match.',
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Search this place on Google Maps.',
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                        const SizedBox(height: 14),
+                        OutlinedButton.icon(
+                          onPressed: _openGoogleMapsSearch,
+                          icon: const Icon(Icons.map_outlined),
+                          label: const Text('Open in Google'),
+                        ),
+                      ],
                     ),
                   ),
                 )
@@ -237,6 +256,18 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         });
       }
     }
+  }
+
+  Future<void> _openGoogleMapsSearch() async {
+    final query = _controller.text.trim();
+    if (query.isEmpty) {
+      return;
+    }
+    final uri = Uri.https('www.google.com', '/maps/search/', {
+      'api': '1',
+      'query': query,
+    });
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 
   Future<void> _showFilters(

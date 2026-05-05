@@ -516,10 +516,25 @@ export class PostgresDealDropPlatform {
     const contributionId = `con_${ulid().toLowerCase()}`;
     await getPool().query(
       `
-        insert into contributions (id, user_id, type, status, title, description, schedule_summary, neighborhood, latitude, longitude, payload)
-        values ($1, $2, 'new_listing', 'submitted', $3, $4, $5, $6, $7, $8, $9)
+        insert into contributions (
+          id, user_id, type, status, title, description, schedule_summary,
+          neighborhood, latitude, longitude, payload, google_place_id, google_place_payload
+        )
+        values ($1, $2, 'new_listing', 'submitted', $3, $4, $5, $6, $7, $8, $9, $10, $11)
       `,
-      [contributionId, userId, payload.title, payload.description, payload.scheduleSummary, payload.neighborhood, payload.latitude, payload.longitude, payload],
+      [
+        contributionId,
+        userId,
+        payload.title,
+        payload.description,
+        payload.scheduleSummary,
+        payload.neighborhood,
+        payload.latitude,
+        payload.longitude,
+        payload,
+        payload.googlePlace?.placeId ?? null,
+        payload.googlePlace ?? {},
+      ],
     );
     await this.addLedger(userId, contributionId, 'new_listing_submission', 10, 'pending');
     await this.pushNotification(userId, 'contribution_resolved', 'Contribution submitted', `${payload.title} is now in the moderation queue.`, '/post');

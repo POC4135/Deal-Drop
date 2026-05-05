@@ -8,6 +8,7 @@ class AppConfig {
     required this.supabaseUrl,
     required this.supabasePublishableKey,
     required this.telemetryEnabled,
+    required this.googleMapsApiKey,
     required this.googleMapsKeyConfigured,
   });
 
@@ -15,6 +16,7 @@ class AppConfig {
   final String supabaseUrl;
   final String supabasePublishableKey;
   final bool telemetryEnabled;
+  final String googleMapsApiKey;
   final bool googleMapsKeyConfigured;
 
   bool get supabaseConfigured =>
@@ -44,6 +46,7 @@ class AppConfig {
       supabaseUrl: supabaseUrl,
       supabasePublishableKey: supabasePublishableKey,
       telemetryEnabled: true,
+      googleMapsApiKey: mapsKey,
       googleMapsKeyConfigured: mapsKey.isNotEmpty,
     );
   }

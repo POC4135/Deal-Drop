@@ -46,8 +46,8 @@ export function AdminShell({
     <div className="admin-shell">
       <aside className="admin-sidebar">
         <div className="space-y-2">
-          <p className="text-xs font-bold uppercase tracking-[0.28em] text-amber-800">DealDrop Admin</p>
-          <h1 className="text-2xl font-semibold tracking-tight text-stone-900">Platform operations</h1>
+          <p className="text-xs font-bold uppercase tracking-[0.28em] text-[var(--accent)]">DealDrop Admin</p>
+          <h1 className="text-2xl font-semibold tracking-tight text-[var(--ink)]">Platform operations</h1>
           <p className="text-sm leading-6 text-[var(--body)]">
             Atlanta launch market control plane for moderation, trust, and freshness.
           </p>
@@ -62,7 +62,7 @@ export function AdminShell({
                   <Link
                     key={item.href}
                     href={item.href}
-                    className="block rounded-2xl px-4 py-3 text-sm font-medium text-stone-800 transition hover:bg-white"
+                    className="block rounded-lg px-4 py-3 text-sm font-medium text-[var(--ink)] transition hover:bg-[var(--panel-strong)] hover:text-[var(--accent-strong)]"
                   >
                     {item.label}
                   </Link>
@@ -76,7 +76,7 @@ export function AdminShell({
       <main className="admin-main">
         <header className="mb-8 flex items-end justify-between gap-6">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.22em] text-amber-700">{eyebrow}</p>
+            <p className="text-sm font-semibold uppercase tracking-[0.22em] text-[var(--accent)]">{eyebrow}</p>
             <h2 className="mt-3 text-4xl font-semibold tracking-tight">{title}</h2>
           </div>
           <div className="pill">Atlanta launch market</div>

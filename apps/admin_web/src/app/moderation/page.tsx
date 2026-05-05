@@ -21,7 +21,7 @@ export default async function ModerationPage() {
           <span key={`${item.id}-p`} className="pill">
             {item.priority}
           </span>,
-          <Link key={`${item.id}-a`} href={`/listings/${item.entityId}`} className="font-semibold text-amber-700">
+          <Link key={`${item.id}-a`} href={`/listings/${item.entityId}`} className="font-semibold text-[var(--accent)]">
             Review
           </Link>,
         ])}

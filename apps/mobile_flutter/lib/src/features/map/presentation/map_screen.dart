@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:dealdrop_design_tokens/dealdrop_design_tokens.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
@@ -10,6 +11,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import '../../../core/models/app_models.dart';
 import '../../../core/services/app_providers.dart';
+import '../../../core/services/google_maps_loader.dart';
 import '../../discovery/application/discovery_providers.dart';
 import '../application/map_providers.dart';
 
@@ -53,6 +55,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     final selectedDealAsync = _selectedListingId == null
         ? null
         : ref.watch(dealProvider(_selectedListingId!));
+    final canRenderInteractiveMap =
+        (!kIsWeb || googleMapsRuntimeAvailable) &&
+        config.googleMapsKeyConfigured;
 
     return SafeArea(
       child: Stack(
@@ -62,33 +67,38 @@ class _MapScreenState extends ConsumerState<MapScreen> {
               borderRadius: const BorderRadius.vertical(
                 bottom: Radius.circular(34),
               ),
-              child: GoogleMap(
-                initialCameraPosition: _atlanta,
-                myLocationEnabled: !_locationDenied,
-                myLocationButtonEnabled: false,
-                compassEnabled: false,
-                mapToolbarEnabled: false,
-                zoomControlsEnabled: false,
-                onMapCreated: (controller) {
-                  _controller = controller;
-                  Future<void>.delayed(const Duration(milliseconds: 250), () {
-                    if (mounted) {
-                      _refreshBounds(_currentCamera);
-                    }
-                  });
-                },
-                onCameraMove: (cameraPosition) {
-                  _currentCamera = cameraPosition;
-                },
-                onCameraIdle: () {
-                  _refreshBounds(_currentCamera);
-                },
-                markers: mapListings.when(
-                  data: (items) => _buildMarkers(items),
-                  error: (_, _) => const <Marker>{},
-                  loading: () => const <Marker>{},
-                ),
-              ),
+              child: canRenderInteractiveMap
+                  ? GoogleMap(
+                      initialCameraPosition: _atlanta,
+                      myLocationEnabled: !_locationDenied,
+                      myLocationButtonEnabled: false,
+                      compassEnabled: false,
+                      mapToolbarEnabled: false,
+                      zoomControlsEnabled: false,
+                      onMapCreated: (controller) {
+                        _controller = controller;
+                        Future<void>.delayed(
+                          const Duration(milliseconds: 250),
+                          () {
+                            if (mounted) {
+                              _refreshBounds(_currentCamera);
+                            }
+                          },
+                        );
+                      },
+                      onCameraMove: (cameraPosition) {
+                        _currentCamera = cameraPosition;
+                      },
+                      onCameraIdle: () {
+                        _refreshBounds(_currentCamera);
+                      },
+                      markers: mapListings.when(
+                        data: (items) => _buildMarkers(items),
+                        error: (_, _) => const <Marker>{},
+                        loading: () => const <Marker>{},
+                      ),
+                    )
+                  : const _MapUnavailableSurface(),
             ),
           ),
           Positioned(
@@ -112,14 +122,13 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                           children: [
                             Text(
                               'Map',
-                              style: Theme.of(context).textTheme.headlineMedium,
+                              style: Theme.of(context).textTheme.titleLarge,
                             ),
                             const SizedBox(height: 4),
-                            Text(
-                              _locationDenied
-                                  ? 'Showing Atlanta by default because location is off.'
-                                  : 'Viewport updates as you move around the city.',
-                              style: Theme.of(context).textTheme.bodySmall,
+                            _MapStatusChip(
+                              label: _locationDenied
+                                  ? 'Atlanta default'
+                                  : 'Move to refresh',
                             ),
                           ],
                         ),
@@ -137,7 +146,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                     icon: Icons.key_outlined,
                     title: 'Google Maps key required',
                     body:
-                        'Add GOOGLE_MAPS_API_KEY for full map rendering in native builds.',
+                        'Add GOOGLE_MAPS_API_KEY for full map rendering in this build.',
                   ),
                 ],
                 if (_locationDenied) ...[
@@ -161,20 +170,24 @@ class _MapScreenState extends ConsumerState<MapScreen> {
               children: [
                 _MapControl(
                   icon: Icons.my_location_rounded,
-                  onTap: _locating ? null : _centerOnUser,
+                  onTap: canRenderInteractiveMap && !_locating
+                      ? _centerOnUser
+                      : null,
                 ),
-                const SizedBox(height: 12),
-                _MapControl(
-                  icon: Icons.add_rounded,
-                  onTap: () =>
-                      _controller?.animateCamera(CameraUpdate.zoomIn()),
-                ),
-                const SizedBox(height: 12),
-                _MapControl(
-                  icon: Icons.remove_rounded,
-                  onTap: () =>
-                      _controller?.animateCamera(CameraUpdate.zoomOut()),
-                ),
+                if (canRenderInteractiveMap) ...[
+                  const SizedBox(height: 12),
+                  _MapControl(
+                    icon: Icons.add_rounded,
+                    onTap: () =>
+                        _controller?.animateCamera(CameraUpdate.zoomIn()),
+                  ),
+                  const SizedBox(height: 12),
+                  _MapControl(
+                    icon: Icons.remove_rounded,
+                    onTap: () =>
+                        _controller?.animateCamera(CameraUpdate.zoomOut()),
+                  ),
+                ],
               ],
             ),
           ),
@@ -339,6 +352,81 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         primary: sorted.first,
       );
     }).toList();
+  }
+}
+
+class _MapUnavailableSurface extends StatelessWidget {
+  const _MapUnavailableSurface();
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFFEAF6F1), Color(0xFFFFF3E4), Color(0xFFEDEBFF)],
+        ),
+      ),
+      child: Center(
+        child: Container(
+          width: 250,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.92),
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: DealDropShadows.card,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 54,
+                height: 54,
+                decoration: BoxDecoration(
+                  color: DealDropPalette.mint,
+                  borderRadius: BorderRadius.circular(18),
+                ),
+                child: const Icon(
+                  Icons.map_outlined,
+                  color: DealDropPalette.mintDeep,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Map key needed',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const SizedBox(height: 5),
+              Text(
+                'Deals still work.',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MapStatusChip extends StatelessWidget {
+  const _MapStatusChip({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+      decoration: BoxDecoration(
+        color: DealDropPalette.warmSurface,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(label, style: Theme.of(context).textTheme.bodySmall),
+    );
   }
 }
 

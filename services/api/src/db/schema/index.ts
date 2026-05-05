@@ -125,6 +125,8 @@ export const venues = pgTable(
     name: varchar('name', { length: 255 }).notNull(),
     rating: doublePrecision('rating').notNull().default(0),
     status: listingStatusEnum('status').notNull().default('active'),
+    googlePlaceId: varchar('google_place_id', { length: 255 }),
+    googlePlacePayload: jsonb('google_place_payload').notNull().default({}),
     deletedAt: timestamp('deleted_at', { withTimezone: true }),
     archivedAt: timestamp('archived_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
@@ -133,6 +135,7 @@ export const venues = pgTable(
   (table) => ({
     venueSlugIdx: uniqueIndex('venues_slug_idx').on(table.slug),
     venueActiveIdx: index('venues_active_idx').on(table.status, table.updatedAt),
+    venueGooglePlaceIdx: uniqueIndex('venues_google_place_idx').on(table.googlePlaceId),
   }),
 );
 
@@ -279,6 +282,8 @@ export const contributions = pgTable(
     latitude: doublePrecision('latitude'),
     longitude: doublePrecision('longitude'),
     payload: jsonb('payload').notNull().default({}),
+    googlePlaceId: varchar('google_place_id', { length: 255 }),
+    googlePlacePayload: jsonb('google_place_payload').notNull().default({}),
     duplicateOfListingId: varchar('duplicate_of_listing_id', { length: 64 }),
     idempotencyKey: varchar('idempotency_key', { length: 160 }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
@@ -288,6 +293,7 @@ export const contributions = pgTable(
     contributionStatusIdx: index('contributions_status_idx').on(table.status, table.createdAt),
     contributionUserIdx: index('contributions_user_idx').on(table.userId, table.createdAt),
     contributionIdempotencyIdx: uniqueIndex('contributions_idempotency_idx').on(table.idempotencyKey),
+    contributionGooglePlaceIdx: index('contributions_google_place_idx').on(table.googlePlaceId),
   }),
 );
 

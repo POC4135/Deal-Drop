@@ -18,7 +18,9 @@ class DealCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final offers = deal.offers.isEmpty ? const <ListingOffer>[] : deal.offers.take(2).toList();
+    final offers = deal.offers.isEmpty
+        ? const <ListingOffer>[]
+        : deal.offers.take(1).toList();
 
     return Semantics(
       button: true,
@@ -28,45 +30,56 @@ class DealCard extends StatelessWidget {
         child: Container(
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(28),
+            borderRadius: BorderRadius.circular(22),
             boxShadow: DealDropShadows.card,
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                padding: const EdgeInsets.all(18),
+                padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
                   color: deal.tone.surfaceTint,
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(22),
+                  ),
                 ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Container(
-                      width: 56,
-                      height: 56,
+                      width: 46,
+                      height: 46,
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(18),
+                        borderRadius: BorderRadius.circular(15),
                       ),
-                      child: Icon(deal.icon, color: deal.tone.accent, size: 28),
+                      child: Icon(deal.icon, color: deal.tone.accent, size: 24),
                     ),
-                    const SizedBox(width: 14),
+                    const SizedBox(width: 12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(deal.venueName, style: theme.textTheme.titleLarge),
-                          const SizedBox(height: 6),
                           Text(
-                            '${deal.neighborhood} • ${deal.affordabilityLabel} • ${deal.distanceMiles.toStringAsFixed(1)} mi',
-                            style: theme.textTheme.bodyMedium,
+                            deal.venueName,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.titleMedium,
                           ),
-                          const SizedBox(height: 10),
+                          const SizedBox(height: 4),
+                          Text(
+                            '${deal.neighborhood} · ${deal.distanceMiles.toStringAsFixed(1)} mi',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.bodySmall,
+                          ),
+                          const SizedBox(height: 8),
                           Text(
                             deal.title,
-                            style: theme.textTheme.headlineMedium?.copyWith(fontSize: 22),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.titleLarge,
                           ),
                         ],
                       ),
@@ -75,15 +88,19 @@ class DealCard extends StatelessWidget {
                       onTap: onSavePressed,
                       borderRadius: BorderRadius.circular(18),
                       child: Ink(
-                        width: 46,
-                        height: 46,
+                        width: 40,
+                        height: 40,
                         decoration: BoxDecoration(
                           color: Colors.white,
-                          borderRadius: BorderRadius.circular(18),
+                          borderRadius: BorderRadius.circular(15),
                         ),
                         child: Icon(
-                          deal.saved ? Icons.bookmark_rounded : Icons.bookmark_outline_rounded,
-                          color: deal.saved ? DealDropPalette.goldDeep : DealDropPalette.ink,
+                          deal.saved
+                              ? Icons.bookmark_rounded
+                              : Icons.bookmark_outline_rounded,
+                          color: deal.saved
+                              ? DealDropPalette.goldDeep
+                              : DealDropPalette.ink,
                         ),
                       ),
                     ),
@@ -91,59 +108,83 @@ class DealCard extends StatelessWidget {
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
+                padding: const EdgeInsets.fromLTRB(14, 14, 14, 13),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        _MetaPill(
-                          icon: deal.trustBand.icon,
-                          label: deal.trustBand.label,
-                          background: deal.trustBand.tint,
-                          foreground: deal.trustBand.foreground,
-                        ),
-                        _MetaPill(
-                          icon: Icons.schedule_rounded,
-                          label: deal.scheduleLabel,
-                          background: DealDropPalette.warmSurface,
-                          foreground: DealDropPalette.body,
-                        ),
-                        _MetaPill(
-                          icon: Icons.bolt_rounded,
-                          label: '${(deal.confidenceScore * 100).round()}% confidence',
-                          background: Colors.white,
-                          foreground: DealDropPalette.goldDeep,
-                          outlined: true,
-                        ),
-                      ],
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          _MetaPill(
+                            icon: deal.trustBand.icon,
+                            label: deal.trustBand.shortLabel,
+                            background: deal.trustBand.tint,
+                            foreground: deal.trustBand.foreground,
+                          ),
+                          const SizedBox(width: 7),
+                          _MetaPill(
+                            icon: Icons.schedule_rounded,
+                            label: _compactSchedule(deal.scheduleLabel),
+                            background: DealDropPalette.warmSurface,
+                            foreground: DealDropPalette.body,
+                          ),
+                          const SizedBox(width: 7),
+                          _MetaPill(
+                            icon: Icons.bolt_rounded,
+                            label: '${(deal.confidenceScore * 100).round()}%',
+                            background: Colors.white,
+                            foreground: DealDropPalette.goldDeep,
+                            outlined: true,
+                          ),
+                        ],
+                      ),
                     ),
-                    const SizedBox(height: 14),
-                    Text(
-                      deal.valueNote,
-                      style: theme.textTheme.bodyMedium?.copyWith(color: DealDropPalette.ink),
-                    ),
+                    if (deal.valueNote.isNotEmpty) ...[
+                      const SizedBox(height: 10),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 11,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: DealDropPalette.cream,
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: Text(
+                          deal.valueNote,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: DealDropPalette.ink,
+                          ),
+                        ),
+                      ),
+                    ],
                     if (offers.isNotEmpty) ...[
                       const SizedBox(height: 16),
                       for (var index = 0; index < offers.length; index++) ...[
                         _OfferRow(offer: offers[index]),
-                        if (index < offers.length - 1) const Divider(height: 20),
+                        if (index < offers.length - 1)
+                          const Divider(height: 20),
                       ],
                     ],
-                    const SizedBox(height: 14),
+                    const SizedBox(height: 10),
                     Row(
                       children: [
                         Expanded(
                           child: Text(
                             deal.freshnessText,
-                            style: theme.textTheme.bodySmall?.copyWith(color: DealDropPalette.body),
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: DealDropPalette.body,
+                            ),
                           ),
                         ),
                         Text(
-                          deal.lastUpdatedText,
-                          style: theme.textTheme.labelLarge?.copyWith(color: DealDropPalette.goldDeep),
+                          deal.affordabilityLabel,
+                          style: theme.textTheme.labelLarge?.copyWith(
+                            color: DealDropPalette.goldDeep,
+                          ),
                         ),
                       ],
                     ),
@@ -156,6 +197,20 @@ class DealCard extends StatelessWidget {
       ),
     );
   }
+}
+
+String _compactSchedule(String value) {
+  final lower = value.toLowerCase();
+  if (lower.contains('live')) {
+    return 'Live now';
+  }
+  if (lower.contains('tonight')) {
+    return 'Tonight';
+  }
+  if (value.length > 18) {
+    return '${value.substring(0, 17)}...';
+  }
+  return value;
 }
 
 class _OfferRow extends StatelessWidget {
@@ -171,7 +226,9 @@ class _OfferRow extends StatelessWidget {
         Expanded(
           child: Text(
             offer.title,
-            style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ),
         Text(
@@ -190,7 +247,9 @@ class _OfferRow extends StatelessWidget {
           ),
           child: Text(
             '\$${offer.dealPrice.toStringAsFixed(2)}',
-            style: theme.textTheme.titleMedium?.copyWith(color: DealDropPalette.success),
+            style: theme.textTheme.titleMedium?.copyWith(
+              color: DealDropPalette.success,
+            ),
           ),
         ),
       ],
@@ -216,7 +275,7 @@ class _MetaPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
       decoration: BoxDecoration(
         color: background,
         borderRadius: BorderRadius.circular(999),
@@ -225,14 +284,14 @@ class _MetaPill extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 15, color: foreground),
-          const SizedBox(width: 6),
+          Icon(icon, size: 14, color: foreground),
+          const SizedBox(width: 5),
           Text(
             label,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: foreground,
-                  fontWeight: FontWeight.w700,
-                ),
+              color: foreground,
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ],
       ),

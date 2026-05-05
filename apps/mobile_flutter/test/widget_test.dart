@@ -159,7 +159,7 @@ void main() {
     await tester.tap(find.text('Continue as guest'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Atlanta, GA'), findsOneWidget);
+    expect(find.text('Atlanta'), findsOneWidget);
     expect(find.text('Deals'), findsWidgets);
   });
 

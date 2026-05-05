@@ -39,7 +39,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--muted)]">Operator actions</p>
           <div className="mt-5 space-y-3">
             {['Approve change', 'Request proof', 'Push stale recheck', 'Suppress listing'].map((action) => (
-              <button key={action} className="w-full rounded-[20px] border border-[var(--line)] bg-white px-4 py-3 text-left font-semibold">
+              <button key={action} className="w-full rounded-lg border border-[var(--line)] bg-white px-4 py-3 text-left font-semibold hover:border-[var(--accent)] hover:bg-[var(--accent-soft)]">
                 {action}
               </button>
             ))}

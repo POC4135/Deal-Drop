@@ -26,7 +26,7 @@ export default function NewVenuePage() {
           <Field name="latitude" label="Latitude" type="number" />
           <Field name="longitude" label="Longitude" type="number" />
         </div>
-        <button className="mt-6 rounded-full bg-amber-600 px-5 py-3 text-sm font-semibold text-white">Save venue</button>
+        <button className="mt-6 rounded-full bg-[var(--accent)] px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-[var(--accent-strong)]">Save venue</button>
       </form>
     </AdminShell>
   );
@@ -36,7 +36,7 @@ function Field({ name, label, type = 'text' }: { name: string; label: string; ty
   return (
     <label className="block">
       <span className="mb-2 block text-sm font-semibold text-[var(--body)]">{label}</span>
-      <input name={name} required type={type} step={type === 'number' ? 'any' : undefined} className="w-full rounded-[20px] border border-[var(--line)] bg-white px-4 py-3" />
+      <input name={name} required type={type} step={type === 'number' ? 'any' : undefined} className="w-full rounded-lg border border-[var(--line)] bg-white px-4 py-3" />
     </label>
   );
 }

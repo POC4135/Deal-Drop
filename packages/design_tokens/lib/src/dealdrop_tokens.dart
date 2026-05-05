@@ -3,25 +3,25 @@ import 'dart:ui' show lerpDouble;
 import 'package:flutter/material.dart';
 
 final class DealDropPalette {
-  static const cream = Color(0xFFFFFBF4);
-  static const warmSurface = Color(0xFFF7EFE3);
-  static const warmSurfaceStrong = Color(0xFFF0E2CF);
-  static const ink = Color(0xFF1E1711);
-  static const body = Color(0xFF5D5348);
-  static const muted = Color(0xFFA79A8A);
-  static const gold = Color(0xFFE4A521);
-  static const goldDeep = Color(0xFFA96E00);
-  static const goldSoft = Color(0xFFFFF0CC);
-  static const mint = Color(0xFFA9F0EA);
-  static const mintDeep = Color(0xFF0D7C78);
-  static const rose = Color(0xFFF8D5D9);
-  static const coral = Color(0xFFFFD8CB);
-  static const sky = Color(0xFFD9EBFF);
-  static const lilac = Color(0xFFE9DFFF);
-  static const success = Color(0xFF2B9A66);
-  static const warning = Color(0xFFE97E28);
-  static const divider = Color(0xFFEADFCE);
-  static const shadow = Color(0x12000000);
+  static const cream = Color(0xFFFBFAF4);
+  static const warmSurface = Color(0xFFEFF6ED);
+  static const warmSurfaceStrong = Color(0xFFDCEBDC);
+  static const ink = Color(0xFF17211B);
+  static const body = Color(0xFF526159);
+  static const muted = Color(0xFF829086);
+  static const gold = Color(0xFFFF6B4A);
+  static const goldDeep = Color(0xFFC23A22);
+  static const goldSoft = Color(0xFFFFE8DF);
+  static const mint = Color(0xFFC8F3CF);
+  static const mintDeep = Color(0xFF167747);
+  static const rose = Color(0xFFFFDCE4);
+  static const coral = Color(0xFFFFDFD0);
+  static const sky = Color(0xFFDCEEFE);
+  static const lilac = Color(0xFFEDE4FF);
+  static const success = Color(0xFF168A57);
+  static const warning = Color(0xFFD96824);
+  static const divider = Color(0xFFDCE8DD);
+  static const shadow = Color(0x1A0A2015);
 }
 
 final class DealDropSpacing {

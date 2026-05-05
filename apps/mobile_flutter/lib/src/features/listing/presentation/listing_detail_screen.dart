@@ -363,9 +363,13 @@ class _DetailBody extends ConsumerWidget {
   }
 
   Future<void> _openDirections(BuildContext context, Deal deal) async {
-    final uri = Uri.parse(
-      'https://www.google.com/maps/search/?api=1&query=${deal.latitude},${deal.longitude}',
-    );
+    final destination = deal.venueAddress.isNotEmpty
+        ? '${deal.venueName}, ${deal.venueAddress}'
+        : '${deal.latitude},${deal.longitude}';
+    final uri = Uri.https('www.google.com', '/maps/dir/', {
+      'api': '1',
+      'destination': destination,
+    });
     final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
     if (!launched && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(

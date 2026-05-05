@@ -6,8 +6,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/models/app_models.dart';
+import '../../../core/models/google_place_models.dart';
 import '../../../core/services/app_providers.dart';
 import '../../../core/services/dealdrop_repository.dart';
+import '../../../core/services/google_places_service.dart';
 import '../../karma/application/karma_providers.dart';
 import '../application/post_providers.dart';
 
@@ -42,14 +44,21 @@ class _ContributionFormScreenState
   Timer? _debounce;
   bool _submitting = false;
   bool _searching = false;
+  bool _venueSearching = false;
   String? _error;
   String? _proofAssetKey;
   Deal? _selectedListing;
+  GooglePlaceDetails? _selectedGooglePlace;
+  List<GooglePlacePrediction> _venuePredictions = const [];
   List<Deal> _searchResults = const [];
+  late final GooglePlacesService _googlePlacesService;
 
   @override
   void initState() {
     super.initState();
+    _googlePlacesService = GooglePlacesService(
+      config: ref.read(appConfigProvider),
+    );
     final action = _config;
     if (widget.listingId != null) {
       Future.microtask(() async {
@@ -193,13 +202,46 @@ class _ContributionFormScreenState
                   const SizedBox(height: 10),
                   TextFormField(
                     controller: _venueController,
+                    onChanged: _searchGoogleVenues,
                     validator: (value) => (value ?? '').trim().isEmpty
                         ? 'Add the venue name.'
+                        : _selectedGooglePlace == null
+                        ? 'Pick a Google Maps venue.'
                         : null,
                     decoration: const InputDecoration(
-                      hintText: 'Restaurant or venue name',
+                      prefixIcon: Icon(Icons.place_outlined),
+                      hintText: 'Search Google Maps venues',
                     ),
                   ),
+                  if (_venueSearching)
+                    const Padding(
+                      padding: EdgeInsets.only(top: 12),
+                      child: LinearProgressIndicator(),
+                    ),
+                  if (_selectedGooglePlace != null) ...[
+                    const SizedBox(height: 12),
+                    _SelectedGooglePlaceTile(place: _selectedGooglePlace!),
+                  ],
+                  if (_venuePredictions.isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    ..._venuePredictions
+                        .take(5)
+                        .map(
+                          (place) => Padding(
+                            padding: const EdgeInsets.only(bottom: 8),
+                            child: ListTile(
+                              onTap: () => _selectGooglePlace(place),
+                              tileColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(18),
+                              ),
+                              leading: const Icon(Icons.place_outlined),
+                              title: Text(place.mainText),
+                              subtitle: Text(place.secondaryText),
+                            ),
+                          ),
+                        ),
+                  ],
                   const SizedBox(height: 14),
                   const _FieldLabel('Neighborhood'),
                   const SizedBox(height: 10),
@@ -464,13 +506,17 @@ class _ContributionFormScreenState
       late final SubmissionOutcome outcome;
       switch (_config.slug) {
         case 'suggest-deal':
+          final place = _selectedGooglePlace!;
           outcome = await repository.submitNewContribution(
-            venueName: _venueController.text.trim(),
+            venueName: place.name,
             neighborhood: _neighborhoodController.text.trim(),
             title: _titleController.text.trim(),
             description: _descriptionController.text.trim(),
             conditions: _conditionsController.text.trim(),
             scheduleSummary: _scheduleController.text.trim(),
+            latitude: place.latitude,
+            longitude: place.longitude,
+            googlePlace: place.toJson(),
           );
         case 'suggest-update':
           outcome = await repository.submitListingUpdate(
@@ -526,6 +572,130 @@ class _ContributionFormScreenState
         });
       }
     }
+  }
+
+  Future<void> _searchGoogleVenues(String query) async {
+    setState(() {
+      _selectedGooglePlace = null;
+    });
+    final normalized = query.trim();
+    if (normalized.length < 2) {
+      setState(() {
+        _venuePredictions = const [];
+      });
+      return;
+    }
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 250), () async {
+      setState(() {
+        _venueSearching = true;
+      });
+      try {
+        final predictions = await _googlePlacesService.searchPlaces(normalized);
+        if (!mounted) {
+          return;
+        }
+        setState(() {
+          _venuePredictions = predictions;
+          _error = predictions.isEmpty
+              ? 'No Google Maps venues found. Check the name or API key.'
+              : null;
+        });
+      } finally {
+        if (mounted) {
+          setState(() {
+            _venueSearching = false;
+          });
+        }
+      }
+    });
+  }
+
+  Future<void> _selectGooglePlace(GooglePlacePrediction prediction) async {
+    setState(() {
+      _venueSearching = true;
+      _error = null;
+    });
+    final details = await _googlePlacesService.fetchPlaceDetails(
+      prediction.placeId,
+    );
+    if (!mounted) {
+      return;
+    }
+    if (details == null) {
+      setState(() {
+        _venueSearching = false;
+        _error = 'Unable to load Google Maps details for this venue.';
+      });
+      return;
+    }
+    setState(() {
+      _selectedGooglePlace = details;
+      _venueController.text = details.name;
+      _venuePredictions = const [];
+      _venueSearching = false;
+      if (details.formattedAddress.isNotEmpty) {
+        _neighborhoodController.text = _inferArea(details.formattedAddress);
+      }
+    });
+  }
+
+  String _inferArea(String address) {
+    final parts = address.split(',').map((item) => item.trim()).toList();
+    if (parts.length >= 2) {
+      return parts[parts.length - 2].replaceAll(RegExp(r'\s+\d{5}.*$'), '');
+    }
+    return _neighborhoodController.text;
+  }
+}
+
+class _SelectedGooglePlaceTile extends StatelessWidget {
+  const _SelectedGooglePlaceTile({required this.place});
+
+  final GooglePlaceDetails place;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: DealDropShadows.card,
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: DealDropPalette.sky,
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: const Icon(Icons.map_outlined, color: DealDropPalette.ink),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  place.name,
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  place.formattedAddress,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 

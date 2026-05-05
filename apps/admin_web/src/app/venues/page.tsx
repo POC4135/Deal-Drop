@@ -9,7 +9,7 @@ export default async function VenuesPage() {
   return (
     <AdminShell eyebrow="Catalog" title="Venues">
       <div className="mb-6 flex justify-end">
-        <Link href="/venues/new" className="rounded-full bg-amber-600 px-5 py-3 text-sm font-semibold text-white">
+        <Link href="/venues/new" className="rounded-full bg-[var(--accent)] px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-[var(--accent-strong)]">
           Create venue
         </Link>
       </div>
@@ -24,7 +24,7 @@ export default async function VenuesPage() {
           </div>,
           <span key={`${venue.id}-neighborhood`}>{venue.neighborhood}</span>,
           <span key={`${venue.id}-active`}>{venue.activeListingCount}</span>,
-          <Link key={`${venue.id}-detail`} href={`/venues/${venue.id}`} className="font-semibold text-amber-700">
+          <Link key={`${venue.id}-detail`} href={`/venues/${venue.id}`} className="font-semibold text-[var(--accent)]">
             Open
           </Link>,
         ])}
