@@ -1,3 +1,5 @@
+import 'dotenv/config';
+
 import { Client } from 'pg';
 
 import { parseRuntimeEnv } from '@dealdrop/config';
@@ -6,7 +8,17 @@ import { atlantaSeed } from '../seeds/atlanta.js';
 
 async function main() {
   const env = parseRuntimeEnv(process.env);
-  const client = new Client({ connectionString: env.DATABASE_URL });
+  const match = env.DATABASE_URL.match(/^postgres(?:ql)?:\/\/([^:]+):([^@]+)@([^:/]+):?(\d*)\/(.+)$/);
+  if (!match) throw new Error('Could not parse DATABASE_URL');
+  const [, user, password, host, port, database] = match;
+  const client = new Client({
+    host,
+    port: Number(port) || 5432,
+    database,
+    user,
+    password,
+    ssl: host.includes('supabase') ? { rejectUnauthorized: false } : false,
+  });
   await client.connect();
 
   for (const user of atlantaSeed.users) {
