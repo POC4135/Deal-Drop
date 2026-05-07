@@ -64,3 +64,6 @@ infra/local/minio-data/
 .env
 .env.local
 .env.*.local
+
+# Claude Code
+CLAUDE.md
