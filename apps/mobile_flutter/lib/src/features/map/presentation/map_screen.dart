@@ -13,6 +13,7 @@ import '../../../core/models/app_models.dart';
 import '../../../core/services/app_providers.dart';
 import '../../../core/services/google_maps_loader.dart';
 import '../../discovery/application/discovery_providers.dart';
+import 'bug_report_overlay.dart';
 import '../application/map_providers.dart';
 
 class MapScreen extends ConsumerStatefulWidget {
@@ -193,6 +194,11 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                 ],
               ],
             ),
+          ),
+          Positioned(
+            left: 16,
+            bottom: selectedDealAsync == null ? 32 : 220,
+            child: const BugReportButton(),
           ),
           if (mapListings.isLoading)
             const Positioned(

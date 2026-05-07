@@ -719,6 +719,16 @@ class DealDropRepository {
     );
   }
 
+  Future<void> submitFeedback({
+    required String title,
+    required String description,
+  }) async {
+    await _apiClient.postNoContent(
+      '/v1/feedback',
+      body: {'title': title, 'description': description},
+    );
+  }
+
   Future<void> unregisterDevice({required String deviceId}) async {
     if (!isAuthenticated) {
       return;
