@@ -4,6 +4,7 @@ import { z } from 'zod';
 const bodySchema = z.object({
   title: z.string().min(1).max(200),
   description: z.string().max(2000).default(''),
+  metadata: z.record(z.string()).default({}),
 });
 
 export async function registerFeedbackRoutes(app: FastifyInstance): Promise<void> {
@@ -13,13 +14,17 @@ export async function registerFeedbackRoutes(app: FastifyInstance): Promise<void
       return reply.status(503).send({ error: 'Feedback reporting is not configured.' });
     }
 
-    const { title, description } = bodySchema.parse(request.body);
+    const { title, description, metadata } = bodySchema.parse(request.body);
 
     const lines = [
       '*🐛 Bug Report*',
       `*Title:* ${title}`,
       ...(description ? [`*Details:* ${description}`] : []),
-      `*Platform:* web  |  ${new Date().toUTCString()}`,
+      '',
+      ...(metadata.route    ? [`*Screen:*    \`${metadata.route}\``]    : []),
+      ...(metadata.platform ? [`*Platform:*  ${metadata.platform}`]     : []),
+      ...(metadata.screen   ? [`*Viewport:*  ${metadata.screen}`]       : []),
+      `*Time:*     ${new Date().toUTCString()}`,
     ];
 
     await fetch(webhookUrl, {

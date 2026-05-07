@@ -722,10 +722,11 @@ class DealDropRepository {
   Future<void> submitFeedback({
     required String title,
     required String description,
+    Map<String, String> metadata = const {},
   }) async {
     await _apiClient.postNoContent(
       '/v1/feedback',
-      body: {'title': title, 'description': description},
+      body: {'title': title, 'description': description, 'metadata': metadata},
     );
   }
 

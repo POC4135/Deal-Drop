@@ -1,11 +1,14 @@
 import 'package:dealdrop_design_tokens/dealdrop_design_tokens.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/services/app_providers.dart';
 
 class BugReportButton extends StatelessWidget {
-  const BugReportButton({super.key});
+  const BugReportButton({super.key, required this.currentRoute});
+
+  final String currentRoute;
 
   @override
   Widget build(BuildContext context) {
@@ -25,17 +28,26 @@ class BugReportButton extends StatelessWidget {
   }
 
   void _showSheet(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    final metadata = {
+      'route': currentRoute,
+      'platform': kIsWeb ? 'web' : defaultTargetPlatform.name.toLowerCase(),
+      'screen': '${size.width.toInt()} × ${size.height.toInt()}',
+    };
+
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => const _BugReportSheet(),
+      builder: (_) => _BugReportSheet(metadata: metadata),
     );
   }
 }
 
 class _BugReportSheet extends ConsumerStatefulWidget {
-  const _BugReportSheet();
+  const _BugReportSheet({required this.metadata});
+
+  final Map<String, String> metadata;
 
   @override
   ConsumerState<_BugReportSheet> createState() => _BugReportSheetState();
@@ -66,13 +78,15 @@ class _BugReportSheetState extends ConsumerState<_BugReportSheet> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: DealDropShadows.soft,
       ),
-      child: _submitted ? _SuccessView(onDone: () => Navigator.pop(context)) : _FormView(
-        titleController: _titleController,
-        descriptionController: _descriptionController,
-        submitting: _submitting,
-        onSubmit: _submit,
-        onCancel: () => Navigator.pop(context),
-      ),
+      child: _submitted
+          ? _SuccessView(onDone: () => Navigator.pop(context))
+          : _FormView(
+              titleController: _titleController,
+              descriptionController: _descriptionController,
+              submitting: _submitting,
+              onSubmit: _submit,
+              onCancel: () => Navigator.pop(context),
+            ),
     );
   }
 
@@ -83,9 +97,10 @@ class _BugReportSheetState extends ConsumerState<_BugReportSheet> {
     setState(() => _submitting = true);
     try {
       await ref.read(repositoryProvider).submitFeedback(
-        title: title,
-        description: _descriptionController.text.trim(),
-      );
+            title: title,
+            description: _descriptionController.text.trim(),
+            metadata: widget.metadata,
+          );
       if (mounted) setState(() => _submitted = true);
     } catch (_) {
       if (mounted) {
@@ -136,10 +151,8 @@ class _FormView extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 12),
-            Text(
-              'Report a Bug',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
+            Text('Report a Bug',
+                style: Theme.of(context).textTheme.titleLarge),
             const Spacer(),
             IconButton(
               onPressed: onCancel,
@@ -155,7 +168,8 @@ class _FormView extends StatelessWidget {
           textCapitalization: TextCapitalization.sentences,
           decoration: InputDecoration(
             labelText: 'What went wrong?',
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            border:
+                OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
           ),
         ),
         const SizedBox(height: 12),
@@ -167,7 +181,8 @@ class _FormView extends StatelessWidget {
           decoration: InputDecoration(
             labelText: 'Details (optional)',
             alignLabelWithHint: true,
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            border:
+                OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
           ),
         ),
         const SizedBox(height: 16),
@@ -207,11 +222,8 @@ class _SuccessView extends StatelessWidget {
             color: DealDropPalette.mint,
             borderRadius: BorderRadius.circular(16),
           ),
-          child: const Icon(
-            Icons.check_rounded,
-            size: 28,
-            color: DealDropPalette.mintDeep,
-          ),
+          child: const Icon(Icons.check_rounded,
+              size: 28, color: DealDropPalette.mintDeep),
         ),
         const SizedBox(height: 14),
         Text('Report sent!', style: Theme.of(context).textTheme.titleLarge),
