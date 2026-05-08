@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/services/app_providers.dart';
+import '../features/map/presentation/bug_report_overlay.dart';
 import 'router/app_router.dart';
 import 'theme/app_theme.dart';
 
@@ -53,6 +54,19 @@ class _DealDropAppState extends ConsumerState<DealDropApp>
       debugShowCheckedModeBanner: false,
       routerConfig: router,
       theme: buildDealDropTheme(),
+      builder: (context, child) {
+        final bottomPadding = MediaQuery.of(context).padding.bottom;
+        return Stack(
+          children: [
+            child!,
+            Positioned(
+              left: 16,
+              bottom: bottomPadding + 108,
+              child: const BugReportButton(),
+            ),
+          ],
+        );
+      },
     );
   }
 

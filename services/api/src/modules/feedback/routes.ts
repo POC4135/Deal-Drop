@@ -14,13 +14,14 @@ export async function registerFeedbackRoutes(app: FastifyInstance): Promise<void
       return reply.status(503).send({ error: 'Feedback reporting is not configured.' });
     }
 
-    const { title, description, metadata } = bodySchema.parse(request.body);
+    const { description, metadata } = bodySchema.parse(request.body);
 
+    const isSuggestion = metadata.type === 'suggestion';
     const lines = [
-      '*🐛 Bug Report*',
-      `*Title:* ${title}`,
-      ...(description ? [`*Details:* ${description}`] : []),
+      isSuggestion ? '*💡 Suggestion*' : '*🐛 Bug Report*',
+      `*Details:* ${description}`,
       '',
+      ...(metadata.user     ? [`*Reporter:*  ${metadata.user} (${metadata.email})`] : ['*Reporter:*  Guest']),
       ...(metadata.route    ? [`*Screen:*    \`${metadata.route}\``]    : []),
       ...(metadata.platform ? [`*Platform:*  ${metadata.platform}`]     : []),
       ...(metadata.screen   ? [`*Viewport:*  ${metadata.screen}`]       : []),

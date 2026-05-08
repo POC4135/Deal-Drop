@@ -2,66 +2,88 @@ import 'package:dealdrop_design_tokens/dealdrop_design_tokens.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/services/app_providers.dart';
 
-class BugReportButton extends StatelessWidget {
-  const BugReportButton({super.key, required this.currentRoute});
+enum _ReportType { bug, suggestion }
 
-  final String currentRoute;
+class BugReportButton extends ConsumerWidget {
+  const BugReportButton({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Colors.black,
         borderRadius: BorderRadius.circular(14),
         boxShadow: DealDropShadows.card,
       ),
       child: IconButton(
-        onPressed: () => _showSheet(context),
-        icon: const Icon(Icons.bug_report_outlined),
-        color: DealDropPalette.ink,
-        tooltip: 'Report a bug',
+        onPressed: () => _showSheet(context, ref),
+        icon: const Icon(Icons.feedback_rounded, color: Color(0xFFE53935)),
       ),
     );
   }
 
-  void _showSheet(BuildContext context) {
+  void _showSheet(BuildContext context, WidgetRef ref) {
     final size = MediaQuery.of(context).size;
+    String route = '';
+    try {
+      route = GoRouter.of(context)
+          .routerDelegate
+          .currentConfiguration
+          .uri
+          .toString();
+    } catch (_) {}
+    final session = ref.read(authControllerProvider).valueOrNull?.session;
     final metadata = {
-      'route': currentRoute,
+      if (route.isNotEmpty) 'route': route,
       'platform': kIsWeb ? 'web' : defaultTargetPlatform.name.toLowerCase(),
       'screen': '${size.width.toInt()} × ${size.height.toInt()}',
+      if (session != null) ...{
+        'user': session.displayName,
+        'email': session.email,
+      },
     };
 
     showModalBottomSheet<void>(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => _BugReportSheet(metadata: metadata),
+      builder: (_) => _FeedbackSheet(metadata: metadata),
     );
   }
 }
 
-class _BugReportSheet extends ConsumerStatefulWidget {
-  const _BugReportSheet({required this.metadata});
+class _FeedbackSheet extends ConsumerStatefulWidget {
+  const _FeedbackSheet({required this.metadata});
 
   final Map<String, String> metadata;
 
   @override
-  ConsumerState<_BugReportSheet> createState() => _BugReportSheetState();
+  ConsumerState<_FeedbackSheet> createState() => _FeedbackSheetState();
 }
 
-class _BugReportSheetState extends ConsumerState<_BugReportSheet> {
-  final _titleController = TextEditingController();
+class _FeedbackSheetState extends ConsumerState<_FeedbackSheet> {
   final _descriptionController = TextEditingController();
+  _ReportType _type = _ReportType.bug;
   bool _submitting = false;
   bool _submitted = false;
+  bool _hasText = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _descriptionController.addListener(() {
+      final filled = _descriptionController.text.trim().isNotEmpty;
+      if (filled != _hasText) setState(() => _hasText = filled);
+    });
+  }
 
   @override
   void dispose() {
-    _titleController.dispose();
     _descriptionController.dispose();
     super.dispose();
   }
@@ -79,11 +101,16 @@ class _BugReportSheetState extends ConsumerState<_BugReportSheet> {
         boxShadow: DealDropShadows.soft,
       ),
       child: _submitted
-          ? _SuccessView(onDone: () => Navigator.pop(context))
+          ? _SuccessView(
+              type: _type,
+              onDone: () => Navigator.pop(context),
+            )
           : _FormView(
-              titleController: _titleController,
+              type: _type,
+              onTypeChanged: (t) => setState(() => _type = t),
               descriptionController: _descriptionController,
               submitting: _submitting,
+              canSubmit: _hasText,
               onSubmit: _submit,
               onCancel: () => Navigator.pop(context),
             ),
@@ -91,21 +118,24 @@ class _BugReportSheetState extends ConsumerState<_BugReportSheet> {
   }
 
   Future<void> _submit() async {
-    final title = _titleController.text.trim();
-    if (title.isEmpty) return;
+    final description = _descriptionController.text.trim();
+    if (description.isEmpty) return;
 
     setState(() => _submitting = true);
     try {
       await ref.read(repositoryProvider).submitFeedback(
-            title: title,
-            description: _descriptionController.text.trim(),
-            metadata: widget.metadata,
+            title: _type == _ReportType.bug ? 'Bug Report' : 'Suggestion',
+            description: description,
+            metadata: {
+              ...widget.metadata,
+              'type': _type == _ReportType.bug ? 'bug' : 'suggestion',
+            },
           );
       if (mounted) setState(() => _submitted = true);
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to send report — try again.')),
+          const SnackBar(content: Text('Failed to send — try again.')),
         );
       }
     } finally {
@@ -116,16 +146,20 @@ class _BugReportSheetState extends ConsumerState<_BugReportSheet> {
 
 class _FormView extends StatelessWidget {
   const _FormView({
-    required this.titleController,
+    required this.type,
+    required this.onTypeChanged,
     required this.descriptionController,
     required this.submitting,
+    required this.canSubmit,
     required this.onSubmit,
     required this.onCancel,
   });
 
-  final TextEditingController titleController;
+  final _ReportType type;
+  final ValueChanged<_ReportType> onTypeChanged;
   final TextEditingController descriptionController;
   final bool submitting;
+  final bool canSubmit;
   final VoidCallback onSubmit;
   final VoidCallback onCancel;
 
@@ -137,22 +171,10 @@ class _FormView extends StatelessWidget {
       children: [
         Row(
           children: [
-            Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: DealDropPalette.goldSoft,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Icon(
-                Icons.bug_report_outlined,
-                size: 20,
-                color: DealDropPalette.goldDeep,
-              ),
+            Text(
+              'What would you like to report?',
+              style: Theme.of(context).textTheme.titleLarge,
             ),
-            const SizedBox(width: 12),
-            Text('Report a Bug',
-                style: Theme.of(context).textTheme.titleLarge),
             const Spacer(),
             IconButton(
               onPressed: onCancel,
@@ -162,24 +184,31 @@ class _FormView extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 16),
-        TextField(
-          controller: titleController,
-          autofocus: true,
-          textCapitalization: TextCapitalization.sentences,
-          decoration: InputDecoration(
-            labelText: 'What went wrong?',
-            border:
-                OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-          ),
+        SegmentedButton<_ReportType>(
+          segments: const [
+            ButtonSegment(
+              value: _ReportType.bug,
+              label: Text('Report a Bug'),
+              icon: Icon(Icons.bug_report_outlined),
+            ),
+            ButtonSegment(
+              value: _ReportType.suggestion,
+              label: Text('Make a Suggestion'),
+              icon: Icon(Icons.lightbulb_outline),
+            ),
+          ],
+          selected: {type},
+          onSelectionChanged: (selection) => onTypeChanged(selection.first),
         ),
         const SizedBox(height: 12),
         TextField(
           controller: descriptionController,
+          autofocus: true,
           minLines: 3,
           maxLines: 5,
           textCapitalization: TextCapitalization.sentences,
           decoration: InputDecoration(
-            labelText: 'Details (optional)',
+            labelText: 'Details',
             alignLabelWithHint: true,
             border:
                 OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
@@ -189,14 +218,14 @@ class _FormView extends StatelessWidget {
         SizedBox(
           width: double.infinity,
           child: FilledButton(
-            onPressed: submitting ? null : onSubmit,
+            onPressed: submitting || !canSubmit ? null : onSubmit,
             child: submitting
                 ? const SizedBox(
                     width: 18,
                     height: 18,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const Text('Send Report'),
+                : const Text('Send'),
           ),
         ),
       ],
@@ -205,12 +234,14 @@ class _FormView extends StatelessWidget {
 }
 
 class _SuccessView extends StatelessWidget {
-  const _SuccessView({required this.onDone});
+  const _SuccessView({required this.type, required this.onDone});
 
+  final _ReportType type;
   final VoidCallback onDone;
 
   @override
   Widget build(BuildContext context) {
+    final isSuggestion = type == _ReportType.suggestion;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -226,10 +257,15 @@ class _SuccessView extends StatelessWidget {
               size: 28, color: DealDropPalette.mintDeep),
         ),
         const SizedBox(height: 14),
-        Text('Report sent!', style: Theme.of(context).textTheme.titleLarge),
+        Text(
+          isSuggestion ? 'Suggestion sent!' : 'Report sent!',
+          style: Theme.of(context).textTheme.titleLarge,
+        ),
         const SizedBox(height: 6),
         Text(
-          'Thanks — the team will look into it.',
+          isSuggestion
+              ? 'Thanks — we love hearing ideas.'
+              : 'Thanks — the team will look into it.',
           style: Theme.of(context).textTheme.bodySmall,
         ),
         const SizedBox(height: 20),

@@ -16,7 +16,6 @@ import '../../features/post/presentation/contribution_form_screen.dart';
 import '../../features/post/presentation/post_screen.dart';
 import '../../features/search/presentation/search_screen.dart';
 import '../widgets/dealdrop_bottom_nav.dart';
-import '../../features/map/presentation/bug_report_overlay.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -140,22 +139,7 @@ class DealDropShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Stack(
-        children: [
-          navigationShell,
-          Positioned(
-            left: 16,
-            bottom: 16,
-            child: BugReportButton(
-              currentRoute: GoRouter.of(context)
-                  .routerDelegate
-                  .currentConfiguration
-                  .uri
-                  .toString(),
-            ),
-          ),
-        ],
-      ),
+      body: navigationShell,
       bottomNavigationBar: DealDropBottomNav(
         currentIndex: navigationShell.currentIndex,
         onTap: (index) => navigationShell.goBranch(index),
