@@ -79,7 +79,7 @@ class _AuthFormScreenState extends ConsumerState<AuthFormScreen> {
                     ),
                     const SizedBox(width: 10),
                     Text(
-                      'DealDrop',
+                      'Hapora',
                       style: Theme.of(context).textTheme.headlineMedium
                           ?.copyWith(color: DealDropPalette.goldDeep),
                     ),
@@ -192,7 +192,7 @@ class _AuthFormScreenState extends ConsumerState<AuthFormScreen> {
                     child: Text(
                       _submitting
                           ? 'Working...'
-                          : (_signIn ? 'Enter DealDrop' : 'Create account'),
+                          : (_signIn ? 'Enter Hapora' : 'Create account'),
                     ),
                   ),
                 ),
