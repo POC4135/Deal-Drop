@@ -67,3 +67,6 @@ infra/local/minio-data/
 
 # Claude Code
 CLAUDE.md
+
+# Source assets (not part of the app)
+hapora-logo.png
