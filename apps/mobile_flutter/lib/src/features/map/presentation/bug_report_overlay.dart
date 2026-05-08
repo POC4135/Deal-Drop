@@ -2,40 +2,51 @@ import 'package:dealdrop_design_tokens/dealdrop_design_tokens.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
+import '../../../app/router/app_router.dart' show appRouterProvider, rootNavigatorKey;
 import '../../../core/services/app_providers.dart';
 
 enum _ReportType { bug, suggestion }
 
-class BugReportButton extends ConsumerWidget {
+class BugReportButton extends ConsumerStatefulWidget {
   const BugReportButton({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: Colors.black,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: DealDropShadows.card,
-      ),
-      child: IconButton(
-        onPressed: () => _showSheet(context, ref),
-        icon: const Icon(Icons.feedback_rounded, color: Color(0xFFE53935)),
+  ConsumerState<BugReportButton> createState() => _BugReportButtonState();
+}
+
+class _BugReportButtonState extends ConsumerState<BugReportButton> {
+  bool _sheetOpen = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Visibility(
+      visible: !_sheetOpen,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: Colors.black,
+          borderRadius: BorderRadius.circular(14),
+          boxShadow: DealDropShadows.card,
+        ),
+        child: IconButton(
+          onPressed: _showSheet,
+          icon: const Icon(Icons.feedback_rounded, color: Color(0xFFE53935)),
+        ),
       ),
     );
   }
 
-  void _showSheet(BuildContext context, WidgetRef ref) {
-    final size = MediaQuery.of(context).size;
-    String route = '';
-    try {
-      route = GoRouter.of(context)
-          .routerDelegate
-          .currentConfiguration
-          .uri
-          .toString();
-    } catch (_) {}
+  Future<void> _showSheet() async {
+    final navContext = rootNavigatorKey.currentContext;
+    if (navContext == null) return;
+
+    final size = MediaQuery.of(navContext).size;
+    final route = ref
+        .read(appRouterProvider)
+        .routerDelegate
+        .currentConfiguration
+        .uri
+        .toString();
     final session = ref.read(authControllerProvider).valueOrNull?.session;
     final metadata = {
       if (route.isNotEmpty) 'route': route,
@@ -47,13 +58,14 @@ class BugReportButton extends ConsumerWidget {
       },
     };
 
-    showModalBottomSheet<void>(
-      context: context,
-      useRootNavigator: true,
+    setState(() => _sheetOpen = true);
+    await showModalBottomSheet<void>(
+      context: navContext,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) => _FeedbackSheet(metadata: metadata),
     );
+    if (mounted) setState(() => _sheetOpen = false);
   }
 }
 

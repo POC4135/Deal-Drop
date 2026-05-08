@@ -33,6 +33,7 @@ Future<void> _loadGoogleMaps(AppConfig config) {
 
   script.onLoad.first.then((_) {
     _loaded = true;
+    _injectMapControlStyles();
     if (!completer.isCompleted) {
       completer.complete();
     }
@@ -45,6 +46,18 @@ Future<void> _loadGoogleMaps(AppConfig config) {
 
   html.document.head?.append(script);
   return completer.future;
+}
+
+void _injectMapControlStyles() {
+  if (html.document.getElementById('gmap-control-overrides') != null) return;
+  final style = html.StyleElement()
+    ..id = 'gmap-control-overrides'
+    ..innerText = '''
+      .gm-bundled-control { display: none !important; }
+      .gm-svpc { display: none !important; }
+      .gm-fullscreen-control { display: none !important; }
+    ''';
+  html.document.head?.append(style);
 }
 
 bool isGoogleMapsRuntimeAvailableForPlatform() => _loaded;

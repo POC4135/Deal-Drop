@@ -17,8 +17,11 @@ import '../../features/post/presentation/post_screen.dart';
 import '../../features/search/presentation/search_screen.dart';
 import '../widgets/dealdrop_bottom_nav.dart';
 
+final rootNavigatorKey = GlobalKey<NavigatorState>();
+
 final appRouterProvider = Provider<GoRouter>((ref) {
-  return GoRouter(
+  final router = GoRouter(
+    navigatorKey: rootNavigatorKey,
     initialLocation: '/welcome',
     routes: [
       GoRoute(
@@ -129,6 +132,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
     ],
   );
+
+  ref.onDispose(router.dispose);
+  return router;
 });
 
 class DealDropShell extends StatelessWidget {

@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math' as math;
 
 import 'package:dealdrop_design_tokens/dealdrop_design_tokens.dart';
 import 'package:flutter/foundation.dart';
@@ -8,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:pointer_interceptor/pointer_interceptor.dart';
 
 import '../../../core/models/app_models.dart';
 import '../../../core/services/app_providers.dart';
@@ -22,6 +22,13 @@ class MapScreen extends ConsumerStatefulWidget {
   ConsumerState<MapScreen> createState() => _MapScreenState();
 }
 
+const _mapStyle = '''[
+  {"featureType":"poi","elementType":"all","stylers":[{"visibility":"off"}]},
+  {"featureType":"poi.park","elementType":"geometry.fill","stylers":[{"visibility":"on"}]},
+  {"featureType":"poi.park","elementType":"labels","stylers":[{"visibility":"off"}]},
+  {"featureType":"transit","elementType":"all","stylers":[{"visibility":"off"}]}
+]''';
+
 class _MapScreenState extends ConsumerState<MapScreen> {
   static const _atlanta = CameraPosition(
     target: LatLng(33.7806, -84.3870),
@@ -30,7 +37,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
   GoogleMapController? _controller;
   CameraPosition _currentCamera = _atlanta;
-  String? _selectedListingId;
+  List<String> _selectedIds = [];
+  int _pageIndex = 0;
+  final PageController _pageController = PageController();
   bool _locationDenied = false;
   bool _locating = false;
   Timer? _boundsDebounce;
@@ -45,6 +54,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   void dispose() {
     _boundsDebounce?.cancel();
     _controller?.dispose();
+    _pageController.dispose();
     super.dispose();
   }
 
@@ -52,9 +62,6 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   Widget build(BuildContext context) {
     final config = ref.watch(appConfigProvider);
     final mapListings = ref.watch(mapListingsProvider);
-    final selectedDealAsync = _selectedListingId == null
-        ? null
-        : ref.watch(dealProvider(_selectedListingId!));
     final canRenderInteractiveMap =
         (!kIsWeb || googleMapsRuntimeAvailable) &&
         config.googleMapsKeyConfigured;
@@ -70,11 +77,17 @@ class _MapScreenState extends ConsumerState<MapScreen> {
               child: canRenderInteractiveMap
                   ? GoogleMap(
                       initialCameraPosition: _atlanta,
+                      style: _mapStyle,
                       myLocationEnabled: !_locationDenied,
                       myLocationButtonEnabled: false,
                       compassEnabled: false,
                       mapToolbarEnabled: false,
                       zoomControlsEnabled: false,
+                      rotateGesturesEnabled: false,
+                      onTap: (_) => setState(() {
+                        _selectedIds = [];
+                        _pageIndex = 0;
+                      }),
                       onMapCreated: (controller) {
                         _controller = controller;
                         Future<void>.delayed(
@@ -168,7 +181,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
           ),
           Positioned(
             right: 16,
-            bottom: selectedDealAsync == null ? 32 : 220,
+            bottom: _selectedIds.isEmpty ? 32 : 220,
             child: Column(
               children: [
                 _MapControl(
@@ -201,18 +214,87 @@ class _MapScreenState extends ConsumerState<MapScreen> {
               bottom: 130,
               child: Center(child: CircularProgressIndicator()),
             ),
-          if (selectedDealAsync != null)
+          if (_selectedIds.isNotEmpty)
             Positioned(
-              left: 12,
-              right: 12,
+              left: 0,
+              right: 0,
               bottom: 14,
-              child: selectedDealAsync.when(
-                data: (deal) => GestureDetector(
-                  onTap: () => context.push('/listing/${deal.id}'),
-                  child: _MapPreviewCard(deal: deal),
-                ),
-                error: (_, _) => const SizedBox.shrink(),
-                loading: () => const _MapPreviewLoading(),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(
+                    height: 120,
+                    child: Row(
+                      children: [
+                        _PageArrow(
+                          icon: Icons.chevron_left_rounded,
+                          onTap: _pageIndex > 0
+                              ? () => _pageController.animateToPage(
+                                    _pageIndex - 1,
+                                    duration:
+                                        const Duration(milliseconds: 250),
+                                    curve: Curves.easeInOut,
+                                  )
+                              : null,
+                        ),
+                        Expanded(
+                          child: PageView.builder(
+                            controller: _pageController,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: _selectedIds.length,
+                            onPageChanged: (i) =>
+                                setState(() => _pageIndex = i),
+                            itemBuilder: (context, i) {
+                              final dealAsync =
+                                  ref.watch(dealProvider(_selectedIds[i]));
+                              return dealAsync.when(
+                                data: (deal) => GestureDetector(
+                                  onTap: () => context
+                                      .push('/listing/${deal.id}'),
+                                  child: _MapPreviewCard(deal: deal),
+                                ),
+                                error: (_, _) => const SizedBox.shrink(),
+                                loading: () => const _MapPreviewLoading(),
+                              );
+                            },
+                          ),
+                        ),
+                        _PageArrow(
+                          icon: Icons.chevron_right_rounded,
+                          onTap: _pageIndex < _selectedIds.length - 1
+                              ? () => _pageController.animateToPage(
+                                    _pageIndex + 1,
+                                    duration:
+                                        const Duration(milliseconds: 250),
+                                    curve: Curves.easeInOut,
+                                  )
+                              : null,
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (_selectedIds.length > 1) ...[
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(_selectedIds.length, (i) {
+                        return AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          margin:
+                              const EdgeInsets.symmetric(horizontal: 3),
+                          width: _pageIndex == i ? 16 : 6,
+                          height: 6,
+                          decoration: BoxDecoration(
+                            color: _pageIndex == i
+                                ? Colors.white
+                                : Colors.white54,
+                            borderRadius: BorderRadius.circular(3),
+                          ),
+                        );
+                      }),
+                    ),
+                  ],
+                ],
               ),
             ),
         ],
@@ -301,13 +383,11 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         icon: BitmapDescriptor.defaultMarkerWithHue(markerHue),
         onTap: () {
           setState(() {
-            _selectedListingId = cluster.primary.listingId;
+            _selectedIds =
+                cluster.items.map((d) => d.listingId).toList();
+            _pageIndex = 0;
           });
-          if (cluster.count > 1) {
-            _controller?.animateCamera(
-              CameraUpdate.zoomTo(math.min(_currentCamera.zoom + 1.2, 16)),
-            );
-          }
+          _pageController.jumpToPage(0);
         },
       );
     }).toSet();
@@ -351,8 +431,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         id: entry.key,
         latitude: latitude,
         longitude: longitude,
-        count: items.length,
-        primary: sorted.first,
+        items: sorted,
       );
     }).toList();
   }
@@ -438,15 +517,49 @@ class _ClusterPin {
     required this.id,
     required this.latitude,
     required this.longitude,
-    required this.count,
-    required this.primary,
+    required this.items,
   });
 
   final String id;
   final double latitude;
   final double longitude;
-  final int count;
-  final MapDeal primary;
+  final List<MapDeal> items;
+
+  int get count => items.length;
+  MapDeal get primary => items.first;
+}
+
+class _PageArrow extends StatelessWidget {
+  const _PageArrow({required this.icon, required this.onTap});
+
+  final IconData icon;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 40,
+      child: onTap == null
+          ? const SizedBox.shrink()
+          : Center(
+              child: PointerInterceptor(
+                child: GestureDetector(
+                  onTap: onTap,
+                  child: Container(
+                    width: 30,
+                    height: 30,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      boxShadow: DealDropShadows.card,
+                    ),
+                    child: Icon(icon, size: 20, color: DealDropPalette.ink),
+                  ),
+                ),
+              ),
+            ),
+    );
+  }
 }
 
 class _MapControl extends StatelessWidget {
@@ -457,15 +570,17 @@ class _MapControl extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: DealDropShadows.card,
-      ),
-      child: IconButton(
-        onPressed: onTap,
-        icon: Icon(icon, color: DealDropPalette.ink),
+    return PointerInterceptor(
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          boxShadow: DealDropShadows.card,
+        ),
+        child: IconButton(
+          onPressed: onTap,
+          icon: Icon(icon, color: DealDropPalette.ink),
+        ),
       ),
     );
   }
