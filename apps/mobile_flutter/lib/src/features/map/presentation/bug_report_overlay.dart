@@ -102,30 +102,33 @@ class _FeedbackSheetState extends ConsumerState<_FeedbackSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final bottom = MediaQuery.of(context).viewInsets.bottom;
+    final bottom = MediaQuery.viewInsetsOf(context).bottom;
 
     return Container(
       margin: const EdgeInsets.all(12),
-      padding: EdgeInsets.fromLTRB(20, 20, 20, 20 + bottom),
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
         boxShadow: DealDropShadows.soft,
       ),
-      child: _submitted
-          ? _SuccessView(
-              type: _type,
-              onDone: () => Navigator.pop(context),
-            )
-          : _FormView(
-              type: _type,
-              onTypeChanged: (t) => setState(() => _type = t),
-              descriptionController: _descriptionController,
-              submitting: _submitting,
-              canSubmit: _hasText,
-              onSubmit: _submit,
-              onCancel: () => Navigator.pop(context),
-            ),
+      child: SingleChildScrollView(
+        padding: EdgeInsets.only(bottom: 20 + bottom),
+        child: _submitted
+            ? _SuccessView(
+                type: _type,
+                onDone: () => Navigator.pop(context),
+              )
+            : _FormView(
+                type: _type,
+                onTypeChanged: (t) => setState(() => _type = t),
+                descriptionController: _descriptionController,
+                submitting: _submitting,
+                canSubmit: _hasText,
+                onSubmit: _submit,
+                onCancel: () => Navigator.pop(context),
+              ),
+      ),
     );
   }
 
