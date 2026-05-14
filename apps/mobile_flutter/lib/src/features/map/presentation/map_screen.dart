@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
+import 'dart:typed_data';
+import 'dart:ui' as ui;
 
 import 'package:dealdrop_design_tokens/dealdrop_design_tokens.dart';
 import 'package:flutter/foundation.dart';
@@ -14,6 +16,37 @@ import '../../../core/services/app_providers.dart';
 import '../../../core/services/google_maps_loader.dart';
 import '../../discovery/application/discovery_providers.dart';
 import '../application/map_providers.dart';
+
+// ---------------------------------------------------------------------------
+// Minimal, Uber-style Google Maps JSON style.
+// Hides all POIs, transit, and business labels — shows only streets + water.
+// ---------------------------------------------------------------------------
+const _kMapStyle = '''
+[
+  {"elementType":"geometry","stylers":[{"color":"#f0f0f0"}]},
+  {"elementType":"labels.icon","stylers":[{"visibility":"off"}]},
+  {"elementType":"labels.text.fill","stylers":[{"color":"#9e9e9e"}]},
+  {"elementType":"labels.text.stroke","stylers":[{"color":"#f5f5f5"}]},
+  {"featureType":"administrative","elementType":"geometry","stylers":[{"visibility":"off"}]},
+  {"featureType":"administrative.land_parcel","stylers":[{"visibility":"off"}]},
+  {"featureType":"administrative.neighborhood","stylers":[{"visibility":"off"}]},
+  {"featureType":"poi","stylers":[{"visibility":"off"}]},
+  {"featureType":"road","elementType":"geometry","stylers":[{"color":"#ffffff"}]},
+  {"featureType":"road","elementType":"geometry.stroke","stylers":[{"color":"#e8e8e8"}]},
+  {"featureType":"road","elementType":"labels","stylers":[{"visibility":"simplified"}]},
+  {"featureType":"road.arterial","elementType":"labels","stylers":[{"visibility":"off"}]},
+  {"featureType":"road.highway","elementType":"geometry","stylers":[{"color":"#e8e8e8"}]},
+  {"featureType":"road.highway","elementType":"geometry.stroke","stylers":[{"color":"#d6d6d6"}]},
+  {"featureType":"road.highway","elementType":"labels","stylers":[{"visibility":"off"}]},
+  {"featureType":"road.local","stylers":[{"visibility":"simplified"}]},
+  {"featureType":"transit","stylers":[{"visibility":"off"}]},
+  {"featureType":"water","elementType":"geometry","stylers":[{"color":"#c9e8f5"}]},
+  {"featureType":"water","elementType":"labels.text","stylers":[{"visibility":"off"}]},
+  {"featureType":"landscape","elementType":"geometry","stylers":[{"color":"#f0f0f0"}]},
+  {"featureType":"landscape.man_made","stylers":[{"visibility":"off"}]},
+  {"featureType":"landscape.natural","elementType":"geometry","stylers":[{"color":"#e8f5e9"}]}
+]
+''';
 
 class MapScreen extends ConsumerStatefulWidget {
   const MapScreen({super.key});
@@ -35,10 +68,17 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   bool _locating = false;
   Timer? _boundsDebounce;
 
+  // Cache of rendered BitmapDescriptors per trust band
+  final _markerIconCache = <TrustBand, BitmapDescriptor>{};
+
   @override
   void initState() {
     super.initState();
-    Future.microtask(() => _refreshBounds(_atlanta));
+    Future.microtask(() {
+      _refreshBounds(_atlanta);
+      _tryInitialLocation();
+      _preloadMarkerIcons();
+    });
   }
 
   @override
@@ -48,10 +88,34 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     super.dispose();
   }
 
+  Future<void> _tryInitialLocation() async {
+    final permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied ||
+        permission == LocationPermission.deniedForever) return;
+    try {
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(accuracy: LocationAccuracy.medium),
+      );
+      if (!mounted) return;
+      ref.read(userPositionProvider.notifier).state = UserPosition(
+        latitude: position.latitude,
+        longitude: position.longitude,
+      );
+      final target = CameraPosition(
+        target: LatLng(position.latitude, position.longitude),
+        zoom: 14.5,
+      );
+      await _controller?.animateCamera(CameraUpdate.newCameraPosition(target));
+      if (mounted) setState(() => _currentCamera = target);
+    } catch (_) {}
+  }
+
   @override
   Widget build(BuildContext context) {
     final config = ref.watch(appConfigProvider);
     final mapListings = ref.watch(mapListingsProvider);
+    final categoryFilter = ref.watch(mapCategoryFilterProvider);
+    final distanceFilter = ref.watch(mapDistanceFilterProvider);
     final selectedDealAsync = _selectedListingId == null
         ? null
         : ref.watch(dealProvider(_selectedListingId!));
@@ -62,6 +126,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     return SafeArea(
       child: Stack(
         children: [
+          // ----------------------------------------------------------------
+          // Map layer
+          // ----------------------------------------------------------------
           Positioned.fill(
             child: ClipRRect(
               borderRadius: const BorderRadius.vertical(
@@ -75,23 +142,20 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                       compassEnabled: false,
                       mapToolbarEnabled: false,
                       zoomControlsEnabled: false,
-                      onMapCreated: (controller) {
+                      buildingsEnabled: false,
+                      indoorViewEnabled: false,
+                      trafficEnabled: false,
+                      onMapCreated: (controller) async {
                         _controller = controller;
-                        Future<void>.delayed(
+                        await controller.setMapStyle(_kMapStyle);
+                        await Future<void>.delayed(
                           const Duration(milliseconds: 250),
-                          () {
-                            if (mounted) {
-                              _refreshBounds(_currentCamera);
-                            }
-                          },
                         );
+                        if (mounted) _refreshBounds(_currentCamera);
                       },
-                      onCameraMove: (cameraPosition) {
-                        _currentCamera = cameraPosition;
-                      },
-                      onCameraIdle: () {
-                        _refreshBounds(_currentCamera);
-                      },
+                      onCameraMove: (pos) => _currentCamera = pos,
+                      onCameraIdle: () => _refreshBounds(_currentCamera),
+                      onTap: (_) => setState(() => _selectedListingId = null),
                       markers: mapListings.when(
                         data: (items) => _buildMarkers(items),
                         error: (_, _) => const <Marker>{},
@@ -101,12 +165,18 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                   : const _MapUnavailableSurface(),
             ),
           ),
+
+          // ----------------------------------------------------------------
+          // Header bar + filter chips
+          // ----------------------------------------------------------------
           Positioned(
             left: 16,
             right: 16,
             top: 10,
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                // Title bar
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 12,
@@ -144,28 +214,78 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                   ),
                 ),
                 if (!config.googleMapsKeyConfigured) ...[
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 8),
                   const _InlineBanner(
                     icon: Icons.key_outlined,
                     title: 'Google Maps key required',
-                    body:
-                        'Add GOOGLE_MAPS_API_KEY for full map rendering in this build.',
+                    body: 'Add GOOGLE_MAPS_API_KEY for full map rendering.',
                   ),
                 ],
                 if (_locationDenied) ...[
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 8),
                   _InlineBanner(
                     icon: Icons.location_off_rounded,
                     title: 'Location permission is off',
-                    body:
-                        'You can still browse the citywide map or tap recenter to try again.',
+                    body: 'Browse the citywide map or tap recenter to retry.',
                     actionLabel: 'Retry',
                     onTap: _centerOnUser,
                   ),
                 ],
+                const SizedBox(height: 8),
+                // Category filter chips
+                SizedBox(
+                  height: 38,
+                  child: ListView(
+                    scrollDirection: Axis.horizontal,
+                    children: [
+                      for (final f in MapCategoryFilter.values)
+                        Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: _FilterChip(
+                            label: f.label,
+                            icon: switch (f) {
+                              MapCategoryFilter.all => Icons.apps_rounded,
+                              MapCategoryFilter.food => Icons.restaurant_rounded,
+                              MapCategoryFilter.drink => Icons.local_bar_rounded,
+                            },
+                            selected: categoryFilter == f,
+                            onTap: () => ref
+                                .read(mapCategoryFilterProvider.notifier)
+                                .state = f,
+                          ),
+                        ),
+                      const SizedBox(width: 4),
+                      // Distance filter chips
+                      for (final d in MapDistanceFilter.values)
+                        Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: _FilterChip(
+                            label: d.label,
+                            icon: d == MapDistanceFilter.any
+                                ? Icons.location_searching_rounded
+                                : Icons.social_distance_rounded,
+                            selected: distanceFilter == d,
+                            onTap: () {
+                              ref
+                                  .read(mapDistanceFilterProvider.notifier)
+                                  .state = d;
+                              if (d != MapDistanceFilter.any &&
+                                  ref.read(userPositionProvider) == null) {
+                                _centerOnUser();
+                              }
+                            },
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),
+
+          // ----------------------------------------------------------------
+          // Map controls (zoom + locate)
+          // ----------------------------------------------------------------
           Positioned(
             right: 16,
             bottom: selectedDealAsync == null ? 32 : 220,
@@ -194,6 +314,10 @@ class _MapScreenState extends ConsumerState<MapScreen> {
               ],
             ),
           ),
+
+          // ----------------------------------------------------------------
+          // Loading indicator
+          // ----------------------------------------------------------------
           if (mapListings.isLoading)
             const Positioned(
               left: 20,
@@ -201,6 +325,10 @@ class _MapScreenState extends ConsumerState<MapScreen> {
               bottom: 130,
               child: Center(child: CircularProgressIndicator()),
             ),
+
+          // ----------------------------------------------------------------
+          // Selected deal preview card
+          // ----------------------------------------------------------------
           if (selectedDealAsync != null)
             Positioned(
               left: 12,
@@ -220,10 +348,12 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     );
   }
 
+  // -------------------------------------------------------------------------
+  // Location helpers
+  // -------------------------------------------------------------------------
+
   Future<void> _centerOnUser() async {
-    setState(() {
-      _locating = true;
-    });
+    setState(() => _locating = true);
     try {
       final permission = await Geolocator.checkPermission();
       final resolved = permission == LocationPermission.denied
@@ -231,28 +361,28 @@ class _MapScreenState extends ConsumerState<MapScreen> {
           : permission;
       if (resolved == LocationPermission.denied ||
           resolved == LocationPermission.deniedForever) {
-        setState(() {
-          _locationDenied = true;
-        });
+        setState(() => _locationDenied = true);
         return;
       }
       final position = await Geolocator.getCurrentPosition();
+      ref.read(userPositionProvider.notifier).state = UserPosition(
+        latitude: position.latitude,
+        longitude: position.longitude,
+      );
       final target = CameraPosition(
         target: LatLng(position.latitude, position.longitude),
         zoom: 14.5,
       );
       await _controller?.animateCamera(CameraUpdate.newCameraPosition(target));
-      setState(() {
-        _locationDenied = false;
-        _currentCamera = target;
-      });
-      await _refreshBounds(target);
-    } finally {
       if (mounted) {
         setState(() {
-          _locating = false;
+          _locationDenied = false;
+          _currentCamera = target;
         });
       }
+      _refreshBounds(target);
+    } finally {
+      if (mounted) setState(() => _locating = false);
     }
   }
 
@@ -260,9 +390,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     _boundsDebounce?.cancel();
     _boundsDebounce = Timer(const Duration(milliseconds: 220), () async {
       final controller = _controller;
-      if (controller == null) {
-        return;
-      }
+      if (controller == null) return;
       final region = await controller.getVisibleRegion();
       ref.read(mapBoundsProvider.notifier).state = (
         north: region.northeast.latitude,
@@ -275,43 +403,181 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     });
   }
 
+  // -------------------------------------------------------------------------
+  // Custom marker rendering
+  // -------------------------------------------------------------------------
+
   Set<Marker> _buildMarkers(List<MapDeal> deals) {
     final clusters = _clusterDeals(deals, _currentCamera.zoom);
     return clusters.map((cluster) {
-      final markerHue = switch (cluster.primary.trustBand) {
-        TrustBand.founderVerified => BitmapDescriptor.hueYellow,
-        TrustBand.merchantConfirmed => BitmapDescriptor.hueGreen,
-        TrustBand.userConfirmed => BitmapDescriptor.hueAzure,
-        TrustBand.recentlyUpdated => BitmapDescriptor.hueBlue,
-        TrustBand.needsRecheck => BitmapDescriptor.hueOrange,
-        TrustBand.disputed => BitmapDescriptor.hueRose,
-      };
-
       return Marker(
         markerId: MarkerId(cluster.id),
         position: LatLng(cluster.latitude, cluster.longitude),
-        infoWindow: InfoWindow(
-          title: cluster.count > 1
-              ? '${cluster.count} listings here'
-              : cluster.primary.venueName,
-          snippet: cluster.count > 1
-              ? 'Zoom in for individual deals'
-              : cluster.primary.title,
-        ),
-        icon: BitmapDescriptor.defaultMarkerWithHue(markerHue),
+        icon: _markerIconCache[cluster.primary.trustBand] ??
+            BitmapDescriptor.defaultMarkerWithHue(
+              _trustBandHue(cluster.primary.trustBand),
+            ),
+        anchor: const Offset(0.5, 1.0),
         onTap: () {
-          setState(() {
-            _selectedListingId = cluster.primary.listingId;
-          });
+          setState(() => _selectedListingId = cluster.primary.listingId);
           if (cluster.count > 1) {
             _controller?.animateCamera(
-              CameraUpdate.zoomTo(math.min(_currentCamera.zoom + 1.2, 16)),
+              CameraUpdate.zoomTo(
+                math.min(_currentCamera.zoom + 1.2, 16),
+              ),
             );
           }
         },
       );
     }).toSet();
   }
+
+  double _trustBandHue(TrustBand band) => switch (band) {
+    TrustBand.founderVerified => BitmapDescriptor.hueYellow,
+    TrustBand.merchantConfirmed => BitmapDescriptor.hueGreen,
+    TrustBand.userConfirmed => BitmapDescriptor.hueAzure,
+    TrustBand.recentlyUpdated => BitmapDescriptor.hueBlue,
+    TrustBand.needsRecheck => BitmapDescriptor.hueOrange,
+    TrustBand.disputed => BitmapDescriptor.hueRose,
+  };
+
+  Future<void> _preloadMarkerIcons() async {
+    for (final band in TrustBand.values) {
+      if (_markerIconCache.containsKey(band)) continue;
+      final icon = await _buildCustomMarker(band);
+      _markerIconCache[band] = icon;
+    }
+    if (mounted) setState(() {});
+  }
+
+  Future<BitmapDescriptor> _buildCustomMarker(TrustBand band) async {
+    const size = 80.0;
+    const pinW = 40.0;
+    const pinH = 52.0;
+    const radius = 14.0;
+    const tipH = 12.0;
+    const iconSize = 20.0;
+
+    final recorder = ui.PictureRecorder();
+    final canvas = Canvas(recorder, const Rect.fromLTWH(0, 0, size, size));
+
+    // Shadow
+    final shadowPaint = Paint()
+      ..color = Colors.black.withValues(alpha: 0.22)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
+    canvas.drawOval(
+      Rect.fromCenter(
+        center: const Offset(size / 2, pinH + 4),
+        width: pinW * 0.7,
+        height: 8,
+      ),
+      shadowPaint,
+    );
+
+    // Pin body path
+    final color = _bandColor(band);
+    final bodyPaint = Paint()..color = color;
+    final borderPaint = Paint()
+      ..color = Colors.white
+      ..strokeWidth = 2.5
+      ..style = PaintingStyle.stroke;
+
+    final left = (size - pinW) / 2;
+    final top = (size - pinH) / 2 - 4;
+    final bodyRect = RRect.fromLTRBR(left, top, left + pinW, top + pinH - tipH, const Radius.circular(radius));
+
+    // Draw drop shadow for pin
+    final shadowPinPaint = Paint()
+      ..color = color.withValues(alpha: 0.35)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5);
+    canvas.drawRRect(bodyRect, shadowPinPaint);
+
+    // Draw pin body
+    canvas.drawRRect(bodyRect, bodyPaint);
+    canvas.drawRRect(bodyRect, borderPaint);
+
+    // Tip triangle
+    final tipPath = Path()
+      ..moveTo(left + pinW / 2 - 8, top + pinH - tipH)
+      ..lineTo(left + pinW / 2 + 8, top + pinH - tipH)
+      ..lineTo(left + pinW / 2, top + pinH)
+      ..close();
+    canvas.drawPath(tipPath, bodyPaint);
+    final tipBorderPaint = Paint()
+      ..color = Colors.white
+      ..strokeWidth = 2.5
+      ..style = PaintingStyle.stroke
+      ..strokeJoin = StrokeJoin.round;
+    canvas.drawPath(tipPath, tipBorderPaint);
+
+    // Icon inside pin
+    final iconCenter = Offset(size / 2, top + (pinH - tipH) / 2);
+    final iconPaint = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.fill;
+
+    // Draw a simple icon shape (fork or glass)
+    _drawPinIcon(canvas, iconCenter, iconSize, iconPaint, band);
+
+    final picture = recorder.endRecording();
+    final image = await picture.toImage(size.toInt(), size.toInt());
+    final data = await image.toByteData(format: ui.ImageByteFormat.png);
+    return BitmapDescriptor.bytes(
+      data!.buffer.asUint8List(),
+      imagePixelRatio: 2.0,
+    );
+  }
+
+  void _drawPinIcon(Canvas canvas, Offset center, double size, Paint paint, TrustBand band) {
+    // Simple geometric icons
+    if (band == TrustBand.founderVerified) {
+      // Star shape
+      _drawStar(canvas, center, size / 2, paint);
+    } else {
+      // Location dot
+      canvas.drawCircle(center, size / 4, paint);
+      canvas.drawCircle(
+        center,
+        size / 4,
+        Paint()
+          ..color = _bandColor(band)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.5,
+      );
+    }
+  }
+
+  void _drawStar(Canvas canvas, Offset center, double radius, Paint paint) {
+    final path = Path();
+    final outerR = radius;
+    final innerR = radius * 0.4;
+    for (var i = 0; i < 5; i++) {
+      final outerAngle = (i * 72 - 90) * math.pi / 180;
+      final innerAngle = outerAngle + 36 * math.pi / 180;
+      final outerPoint = Offset(
+        center.dx + outerR * math.cos(outerAngle),
+        center.dy + outerR * math.sin(outerAngle),
+      );
+      final innerPoint = Offset(
+        center.dx + innerR * math.cos(innerAngle),
+        center.dy + innerR * math.sin(innerAngle),
+      );
+      if (i == 0) path.moveTo(outerPoint.dx, outerPoint.dy);
+      else path.lineTo(outerPoint.dx, outerPoint.dy);
+      path.lineTo(innerPoint.dx, innerPoint.dy);
+    }
+    path.close();
+    canvas.drawPath(path, paint);
+  }
+
+  Color _bandColor(TrustBand band) => switch (band) {
+    TrustBand.founderVerified => const Color(0xFFD4A017),
+    TrustBand.merchantConfirmed => const Color(0xFF00C07F),
+    TrustBand.userConfirmed => const Color(0xFF2D7EEA),
+    TrustBand.recentlyUpdated => const Color(0xFF6B7FD7),
+    TrustBand.needsRecheck => const Color(0xFFE88B2F),
+    TrustBand.disputed => const Color(0xFFD0354B),
+  };
 
   List<_ClusterPin> _clusterDeals(List<MapDeal> deals, double zoom) {
     final bucketSize = zoom >= 15
@@ -332,21 +598,10 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
     return clusters.entries.map((entry) {
       final items = entry.value;
-      final latitude =
-          items
-              .map((item) => item.latitude)
-              .reduce((left, right) => left + right) /
-          items.length;
-      final longitude =
-          items
-              .map((item) => item.longitude)
-              .reduce((left, right) => left + right) /
-          items.length;
+      final latitude = items.map((i) => i.latitude).reduce((a, b) => a + b) / items.length;
+      final longitude = items.map((i) => i.longitude).reduce((a, b) => a + b) / items.length;
       final sorted = [...items]
-        ..sort(
-          (left, right) =>
-              right.confidenceScore.compareTo(left.confidenceScore),
-        );
+        ..sort((a, b) => b.confidenceScore.compareTo(a.confidenceScore));
       return _ClusterPin(
         id: entry.key,
         latitude: latitude,
@@ -357,6 +612,62 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     }).toList();
   }
 }
+
+// ---------------------------------------------------------------------------
+// Supporting widget: filter chip
+// ---------------------------------------------------------------------------
+
+class _FilterChip extends StatelessWidget {
+  const _FilterChip({
+    required this.label,
+    required this.icon,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final IconData icon;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: selected ? DealDropPalette.mintDeep : Colors.white,
+          borderRadius: BorderRadius.circular(999),
+          boxShadow: DealDropShadows.card,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 14,
+              color: selected ? Colors.white : DealDropPalette.ink,
+            ),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: selected ? Colors.white : DealDropPalette.ink,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Supporting widgets (mostly unchanged from original)
+// ---------------------------------------------------------------------------
 
 class _MapUnavailableSurface extends StatelessWidget {
   const _MapUnavailableSurface();
@@ -390,23 +701,12 @@ class _MapUnavailableSurface extends StatelessWidget {
                   color: DealDropPalette.mint,
                   borderRadius: BorderRadius.circular(14),
                 ),
-                child: const Icon(
-                  Icons.map_outlined,
-                  color: DealDropPalette.mintDeep,
-                ),
+                child: const Icon(Icons.map_outlined, color: DealDropPalette.mintDeep),
               ),
               const SizedBox(height: 12),
-              Text(
-                'Map key needed',
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
+              Text('Map key needed', textAlign: TextAlign.center, style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: 5),
-              Text(
-                'Deals still work.',
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
+              Text('Deals still work.', textAlign: TextAlign.center, style: Theme.of(context).textTheme.bodySmall),
             ],
           ),
         ),
@@ -502,10 +802,7 @@ class _MapPreviewCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 6,
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
                     color: deal.trustBand.tint,
                     borderRadius: BorderRadius.circular(999),
@@ -533,12 +830,13 @@ class _MapPreviewCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '${deal.neighborhood} • ${deal.affordabilityLabel}',
+                  '${deal.neighborhood} · ${deal.affordabilityLabel}',
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               ],
             ),
           ),
+          const Icon(Icons.chevron_right_rounded, color: DealDropPalette.muted),
         ],
       ),
     );
@@ -551,7 +849,7 @@ class _MapPreviewLoading extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 150,
+      height: 90,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),

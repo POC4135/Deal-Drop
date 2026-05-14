@@ -230,6 +230,7 @@ class Deal {
     required this.trustSummary,
     required this.tags,
     this.saved = false,
+    this.imageUrls = const [],
   });
 
   final String id;
@@ -262,6 +263,7 @@ class Deal {
   final TrustSummary trustSummary;
   final List<String> tags;
   final bool saved;
+  final List<String> imageUrls;
 
   factory Deal.fromCardJson(Map<String, dynamic> json) {
     final trustBand = trustBandFromApi(json['trustBand'] as String);
@@ -351,6 +353,7 @@ class Deal {
           : TrustSummary.fromJson(trustSummaryJson),
       tags: deal.tags,
       saved: json['saved'] as bool? ?? deal.saved,
+      imageUrls: (json['imageUrls'] as List<dynamic>? ?? const []).cast<String>(),
     );
   }
 
@@ -360,6 +363,7 @@ class Deal {
     TrustBand? trustBand,
     String? freshnessText,
     TrustSummary? trustSummary,
+    List<String>? imageUrls,
   }) {
     return Deal(
       id: id,
@@ -392,6 +396,7 @@ class Deal {
       trustSummary: trustSummary ?? this.trustSummary,
       tags: tags,
       saved: saved ?? this.saved,
+      imageUrls: imageUrls ?? this.imageUrls,
     );
   }
 
@@ -961,6 +966,7 @@ class MapDeal {
     required this.confidenceScore,
     required this.affordabilityLabel,
     required this.saved,
+    this.tags = const [],
   });
 
   final String listingId;
@@ -974,6 +980,7 @@ class MapDeal {
   final double confidenceScore;
   final String affordabilityLabel;
   final bool saved;
+  final List<String> tags;
 
   factory MapDeal.fromJson(Map<String, dynamic> json) {
     return MapDeal(
@@ -988,6 +995,7 @@ class MapDeal {
       confidenceScore: (json['confidenceScore'] as num?)?.toDouble() ?? 0,
       affordabilityLabel: json['affordabilityLabel'] as String? ?? 'Under \$15',
       saved: json['saved'] as bool? ?? false,
+      tags: (json['tags'] as List<dynamic>? ?? const []).cast<String>(),
     );
   }
 }
