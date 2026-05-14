@@ -463,6 +463,7 @@ export class PostgresDealDropPlatform {
         confidenceScore: listing.confidence_score,
         affordabilityLabel: this.affordabilityLabel(listing),
         saved: false,
+        tags: listing.tags,
       }));
   }
 
@@ -661,6 +662,84 @@ export class PostgresDealDropPlatform {
       path: payload.path ?? assetKey,
       token: payload.token,
     };
+  }
+
+  async getListingImages(listingId: string): Promise<Array<{ id: string; url: string; assetKey: string }>> {
+    const result = await getPool().query<{ id: string; asset_key: string }>(
+      "select id, asset_key from listing_images where listing_id = $1 and status = 'active' order by created_at asc",
+      [listingId],
+    );
+    const supabaseUrl = process.env.SUPABASE_URL?.replace(/\/$/, '');
+    const bucket = process.env.SUPABASE_LISTING_IMAGES_BUCKET ?? 'listing-images';
+    return result.rows.map((row) => ({
+      id: row.id,
+      assetKey: row.asset_key,
+      url: supabaseUrl
+        ? `${supabaseUrl}/storage/v1/object/public/${bucket}/${row.asset_key}`
+        : `https://uploads.dealdrop.local/${row.asset_key}`,
+    }));
+  }
+
+  async presignListingImageUpload(
+    userId: string,
+    listingId: string,
+    contentType: string,
+  ): Promise<{ assetKey: string; uploadUrl: string; path: string; imageId: string }> {
+    const ext = contentType.includes('png') ? 'png' : 'jpg';
+    const assetKey = `listings/${listingId}/${ulid().toLowerCase()}.${ext}`;
+    const imageId = `img_${ulid().toLowerCase()}`;
+    const bucket = process.env.SUPABASE_LISTING_IMAGES_BUCKET ?? 'listing-images';
+    const signedUpload = await this.createSignedListingImageUpload(assetKey, bucket);
+    await getPool().query(
+      "insert into listing_images (id, listing_id, uploaded_by_user_id, asset_key, content_type, status) values ($1, $2, $3, $4, $5, 'pending')",
+      [imageId, listingId, userId, assetKey, contentType],
+    );
+    return { assetKey, uploadUrl: signedUpload.uploadUrl, path: signedUpload.path, imageId };
+  }
+
+  async confirmListingImageUpload(userId: string, listingId: string, assetKey: string): Promise<void> {
+    await getPool().query(
+      "update listing_images set status = 'active', updated_at = now() where asset_key = $1 and listing_id = $2 and uploaded_by_user_id = $3 and status = 'pending'",
+      [assetKey, listingId, userId],
+    );
+  }
+
+  private async createSignedListingImageUpload(assetKey: string, bucket: string): Promise<SignedUpload> {
+    const supabaseUrl = process.env.SUPABASE_URL?.replace(/\/$/, '');
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (!supabaseUrl || !serviceRoleKey) {
+      return {
+        uploadUrl: `https://uploads.dealdrop.local/${assetKey}?signature=local-dev-placeholder`,
+        path: assetKey,
+      };
+    }
+    const response = await fetch(`${supabaseUrl}/storage/v1/object/upload/sign/${bucket}/${assetKey}`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${serviceRoleKey}`,
+        apikey: serviceRoleKey,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({}),
+    });
+    if (!response.ok) {
+      throw new Error(`supabase_storage_sign_${response.status}`);
+    }
+    const payload = (await response.json()) as SupabaseSignedUploadResponse;
+    const signedPath = payload.signedURL ?? payload.signedUrl;
+    const normalizedSignedPath = signedPath?.startsWith('/object/')
+      ? `/storage/v1${signedPath}`
+      : signedPath?.startsWith('/')
+        ? signedPath
+        : signedPath
+          ? `/storage/v1/${signedPath}`
+          : undefined;
+    const uploadUrl = signedPath?.startsWith('http')
+      ? signedPath
+      : normalizedSignedPath
+        ? `${supabaseUrl}${normalizedSignedPath}`
+        : `${supabaseUrl}/storage/v1/object/upload/sign/${bucket}/${assetKey}?token=${payload.token ?? ''}`;
+    return { uploadUrl, path: payload.path ?? assetKey, token: payload.token };
   }
 
   async registerDevice(userId: string, payload: DeviceRegistration): Promise<DeviceRegistration> {

@@ -51,4 +51,34 @@ export async function registerListingRoutes(app: FastifyInstance, platform: Deal
     const payload = z.object({ reason: z.string(), notes: z.string().optional() }).parse(request.body);
     return platform.reportExpired(request.auth.userId, listingId, payload);
   });
+
+  app.get('/v1/listings/:listingId/images', async (request, reply) => {
+    const { listingId } = listingParamsSchema.parse(request.params);
+    const listing = await platform.getListingDetail(listingId, request.auth.userId);
+    if (!listing) {
+      return reply.code(404).send({ error: 'not_found', requestId: request.requestId });
+    }
+    return platform.getListingImages(listingId);
+  });
+
+  app.post('/v1/listings/:listingId/images/presign', async (request, reply) => {
+    const { listingId } = listingParamsSchema.parse(request.params);
+    const { contentType } = z.object({ contentType: z.string() }).parse(request.body);
+    const listing = await platform.getListingDetail(listingId, request.auth.userId);
+    if (!listing) {
+      return reply.code(404).send({ error: 'not_found', requestId: request.requestId });
+    }
+    return platform.presignListingImageUpload(request.auth.userId, listingId, contentType);
+  });
+
+  app.post('/v1/listings/:listingId/images/confirm', async (request, reply) => {
+    const { listingId } = listingParamsSchema.parse(request.params);
+    const { assetKey } = z.object({ assetKey: z.string() }).parse(request.body);
+    const listing = await platform.getListingDetail(listingId, request.auth.userId);
+    if (!listing) {
+      return reply.code(404).send({ error: 'not_found', requestId: request.requestId });
+    }
+    await platform.confirmListingImageUpload(request.auth.userId, listingId, assetKey);
+    return { ok: true };
+  });
 }

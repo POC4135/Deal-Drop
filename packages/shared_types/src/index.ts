@@ -137,6 +137,7 @@ export const mapListingSchema = z.object({
   confidenceScore: z.number(),
   affordabilityLabel: z.string().default('Under $15'),
   saved: z.boolean().default(false),
+  tags: z.array(z.string()).default([]),
 });
 export type MapListing = z.infer<typeof mapListingSchema>;
 
