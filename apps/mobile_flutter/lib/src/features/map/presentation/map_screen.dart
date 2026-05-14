@@ -137,6 +137,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
               child: canRenderInteractiveMap
                   ? GoogleMap(
                       initialCameraPosition: _atlanta,
+                      cloudMapId: config.googleMapsMapId.isNotEmpty
+                          ? config.googleMapsMapId
+                          : null,
                       myLocationEnabled: !_locationDenied,
                       myLocationButtonEnabled: false,
                       compassEnabled: false,
@@ -147,7 +150,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                       trafficEnabled: false,
                       onMapCreated: (controller) async {
                         _controller = controller;
-                        await controller.setMapStyle(_kMapStyle);
+                        if (!kIsWeb) await controller.setMapStyle(_kMapStyle);
                         await Future<void>.delayed(
                           const Duration(milliseconds: 250),
                         );

@@ -10,6 +10,7 @@ class AppConfig {
     required this.telemetryEnabled,
     required this.googleMapsApiKey,
     required this.googleMapsKeyConfigured,
+    this.googleMapsMapId = '',
   });
 
   final String apiBaseUrl;
@@ -18,6 +19,7 @@ class AppConfig {
   final bool telemetryEnabled;
   final String googleMapsApiKey;
   final bool googleMapsKeyConfigured;
+  final String googleMapsMapId;
 
   bool get supabaseConfigured =>
       supabaseUrl.isNotEmpty && supabasePublishableKey.isNotEmpty;
@@ -29,6 +31,7 @@ class AppConfig {
       'SUPABASE_PUBLISHABLE_KEY',
     );
     const mapsKey = String.fromEnvironment('GOOGLE_MAPS_API_KEY');
+    const mapsMapId = String.fromEnvironment('GOOGLE_MAPS_MAP_ID');
 
     String baseUrl;
     if (configuredBaseUrl.isNotEmpty) {
@@ -48,6 +51,7 @@ class AppConfig {
       telemetryEnabled: true,
       googleMapsApiKey: mapsKey,
       googleMapsKeyConfigured: mapsKey.isNotEmpty,
+      googleMapsMapId: mapsMapId,
     );
   }
 }
