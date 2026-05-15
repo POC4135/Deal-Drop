@@ -111,6 +111,29 @@ export class PostgresDealDropPlatform {
   async bootstrapAuthenticatedUser(auth: AuthContext, input: AuthBootstrap): Promise<AuthResponse> {
     const displayName = input.displayName?.trim() || auth.displayName || auth.email.split('@')[0] || 'DealDrop User';
     const homeNeighborhood = input.homeNeighborhood || 'Midtown';
+    // Remove any orphaned row with the same email but a different id (re-registration
+    // after Supabase Auth deletion). Must delete dependents first due to FK constraints.
+    const orphan = await getPool().query<{ id: string }>(
+      `select id from users where email = $1 and id <> $2`,
+      [auth.email, auth.userId],
+    );
+    if (orphan.rows.length > 0) {
+      const oldId = orphan.rows[0].id;
+      await getPool().query(`delete from notification_preferences where user_id = $1`, [oldId]);
+      await getPool().query(`delete from notifications where user_id = $1`, [oldId]);
+      await getPool().query(`delete from device_registrations where user_id = $1`, [oldId]);
+      await getPool().query(`delete from device_sessions where user_id = $1`, [oldId]);
+      await getPool().query(`delete from streaks where user_id = $1`, [oldId]);
+      await getPool().query(`delete from leaderboard_snapshots where user_id = $1`, [oldId]);
+      await getPool().query(`delete from points_ledger where user_id = $1`, [oldId]);
+      await getPool().query(`delete from favorites where user_id = $1`, [oldId]);
+      await getPool().query(`delete from contributions where user_id = $1`, [oldId]);
+      await getPool().query(`delete from reports where user_id = $1`, [oldId]);
+      await getPool().query(`delete from telemetry_events where user_id = $1`, [oldId]);
+      await getPool().query(`delete from audit_logs where actor_user_id = $1`, [oldId]);
+      await getPool().query(`delete from user_profiles where user_id = $1`, [oldId]);
+      await getPool().query(`delete from users where id = $1`, [oldId]);
+    }
     await getPool().query(
       `
         insert into users (id, email, role)
@@ -138,15 +161,16 @@ export class PostgresDealDropPlatform {
       `,
       [auth.userId],
     );
+    const profile = await this.getProfile(auth.userId);
     return {
       session: {
         userId: auth.userId,
         email: auth.email,
-        displayName,
+        displayName: profile.displayName,
         role: auth.role,
         verifiedContributor: auth.verifiedContributor,
       },
-      profile: await this.getProfile(auth.userId),
+      profile,
     };
   }
 
@@ -415,10 +439,10 @@ export class PostgresDealDropPlatform {
     const page = applyCursorPagination(rows, query.cursor, query.limit);
     const response = {
       sections: [
-        this.buildFeedSection('live-now', 'Live now', 'Fresh, high-confidence finds around you', page.items, userId),
-        this.buildFeedSection('tonight', 'Tonight', 'Dinner, happy-hour, and late-evening value', page.items, userId),
-        this.buildFeedSection('cheap-eats', 'Cheap eats', 'Under-$10 plays near campus and commuter traffic', page.items, userId),
-        this.buildFeedSection('fresh-this-week', 'Fresh this week', 'Listings that were verified recently enough to move fast', page.items, userId),
+        this.buildFeedSection('live-now', 'Live now', 'Fresh, high-confidence finds around you', rows, userId),
+        this.buildFeedSection('tonight', 'Tonight', 'Dinner, happy-hour, and late-evening value', rows, userId),
+        this.buildFeedSection('cheap-eats', 'Cheap eats', 'Under-$10 plays near campus and commuter traffic', rows, userId),
+        this.buildFeedSection('fresh-this-week', 'Fresh', 'Recently verified deals worth acting on', rows, userId),
       ],
       nextCursor: page.nextCursor,
     };
@@ -483,6 +507,51 @@ export class PostgresDealDropPlatform {
       suggestions: normalized ? [...new Set(rows.flatMap((listing) => [listing.venue_name, listing.title]).filter((value) => value.toLowerCase().includes(normalized)).slice(0, 6))] : [],
       nextCursor: page.nextCursor,
     };
+  }
+
+  async getAvailableListings(date: string, time: string, userId?: string): Promise<ListingCard[]> {
+    // date = 'YYYY-MM-DD', time = 'HH:MM' in America/New_York local time
+    const dow = new Date(`${date}T${time}:00`).getDay(); // 0=Sun..6=Sat
+    const rows = await getPool().query<ListingRow & { is_saved: boolean }>(
+      `
+        select distinct on (l.id)
+          l.id, l.venue_id, v.name as venue_name, vl.address as venue_address, vl.neighborhood_name as neighborhood,
+          l.title, l.description, l.category_label, l.schedule_summary, l.conditions, l.source_note, l.cuisine,
+          l.trust_band, l.confidence_score, l.fresh_until_at, l.recheck_after_at, l.last_verified_at,
+          vl.latitude, vl.longitude, v.rating,
+          coalesce((select count(*)::int from contribution_proofs cp join contributions c on c.id = cp.contribution_id where c.listing_id = l.id), 0) as proof_count,
+          coalesce((select count(*)::int from contributions c where c.listing_id = l.id and c.type = 'confirm_valid'), 0) as recent_confirmations,
+          coalesce((select count(*)::int from reports r where r.listing_id = l.id and r.status = 'open'), 0) as negative_signals,
+          coalesce((select array_agg(lt.tag order by lt.tag) from listing_tags lt where lt.listing_id = l.id), '{}') as tags,
+          coalesce((select json_agg(json_build_object('id', lo.id, 'title', lo.title, 'originalPrice', lo.original_price, 'dealPrice', lo.deal_price, 'currency', lo.currency) order by lo.deal_price) from listing_offers lo where lo.listing_id = l.id), '[]') as offers,
+          exists (select 1 from favorites f where f.listing_id = l.id and f.user_id = $3) as is_saved
+        from listings l
+        join venues v on v.id = l.venue_id
+        join venue_locations vl on vl.venue_id = v.id
+        join listing_schedules ls on ls.listing_id = l.id
+        where l.status = 'active'
+          and ls.day_of_week = $1
+          and $2 >= ls.start_time_local
+          and $2 < ls.end_time_local
+        order by l.id, l.confidence_score desc
+      `,
+      [dow, time, userId ?? null],
+    );
+    return rows.rows.map((row) => ({
+      ...this.toListingCard({
+        ...row,
+        confidence_score: Number(row.confidence_score),
+        latitude: Number(row.latitude),
+        longitude: Number(row.longitude),
+        rating: Number(row.rating),
+        proof_count: Number(row.proof_count),
+        recent_confirmations: Number(row.recent_confirmations),
+        negative_signals: Number(row.negative_signals),
+        tags: row.tags ?? [],
+        offers: row.offers ?? [],
+      }),
+      saved: row.is_saved,
+    }));
   }
 
   async getKarma(userId: string, window: LeaderboardWindow = 'weekly'): Promise<KarmaSummary> {
@@ -924,7 +993,40 @@ export class PostgresDealDropPlatform {
   }
 
   private buildFeedSection(id: string, title: string, subtitle: string, source: ListingRow[], userId?: string) {
-    return { id, title, subtitle, items: source.slice(0, 6).map((listing) => this.toListingCard(listing, userId)) };
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    let items: ListingRow[];
+    switch (id) {
+      case 'live-now':
+        items = source.filter(
+          (r) =>
+            r.tags.includes('live-now') ||
+            r.trust_band === 'merchant_confirmed' ||
+            (r.confidence_score >= 0.85 && r.trust_band !== 'needs_recheck' && r.trust_band !== 'disputed'),
+        );
+        break;
+      case 'tonight':
+        items = source.filter(
+          (r) =>
+            r.tags.includes('tonight') ||
+            r.tags.includes('happy-hour') ||
+            /happy.?hour|cocktail|martini|wine|fishbowl|margarita|drink special/i.test(r.title),
+        );
+        break;
+      case 'cheap-eats':
+        items = source.filter(
+          (r) =>
+            r.tags.includes('cheap-eats') ||
+            r.offers.some((o) => o.dealPrice <= 10) ||
+            /\$1\b|\$2\b|dollar|taco|burger|bogo/i.test(r.title),
+        );
+        break;
+      case 'fresh-this-week':
+        items = source.filter((r) => r.last_verified_at !== null && r.last_verified_at >= thirtyDaysAgo);
+        break;
+      default:
+        items = source;
+    }
+    return { id, title, subtitle, items: items.slice(0, 20).map((listing) => this.toListingCard(listing, userId)) };
   }
 
   private sortListingsByDistance(listings: ListingRow[], latitude?: number, longitude?: number): ListingRow[] {

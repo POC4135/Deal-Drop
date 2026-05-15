@@ -164,6 +164,10 @@ class AuthController extends AsyncNotifier<AuthState> {
         profile: payload.profile,
       );
     });
+    if (result case AsyncError(:final error) when error is EmailConfirmationRequiredException) {
+      state = const AsyncData(AuthState(initialized: true, isGuest: true));
+      throw error;
+    }
     state = result;
     if (result.hasError) {
       throw result.error!;

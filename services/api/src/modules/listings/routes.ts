@@ -15,7 +15,18 @@ const confirmBodySchema = z.object({
   proofAssetKey: z.string().optional(),
 });
 
+const availableQuerySchema = z.object({
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  time: z.string().regex(/^\d{2}:\d{2}$/),
+});
+
 export async function registerListingRoutes(app: FastifyInstance, platform: DealDropPlatform): Promise<void> {
+  app.get('/v1/listings/available', async (request) => {
+    const { date, time } = availableQuerySchema.parse(request.query);
+    const userId = request.auth.userId === 'guest_public' || request.auth.userId === 'guest_local' ? undefined : request.auth.userId;
+    return platform.getAvailableListings(date, time, userId);
+  });
+
   app.get('/v1/listings/:listingId', async (request, reply) => {
     const { listingId } = listingParamsSchema.parse(request.params);
     const listing = await platform.getListingDetail(listingId, request.auth.userId);

@@ -373,6 +373,20 @@ export class DealDropPlatform {
     return response;
   }
 
+  async getAvailableListings(date: string, time: string, userId?: string): Promise<ListingCard[]> {
+    const dow = new Date(`${date}T${time}:00`).getDay();
+    const matchingIds = new Set(
+      this.seed.schedules
+        .filter((s) => s.dayOfWeek === dow && time >= s.startTimeLocal && time < s.endTimeLocal)
+        .map((s) => s.listingId),
+    );
+    const savedIds = new Set(userId ? (this.seed.favoriteIdsByUser[userId] ?? []) : []);
+    return this.seed.listings
+      .filter((l) => matchingIds.has(l.id) && l.status === 'active')
+      .map((l) => this.toListingCard(l, userId))
+      .map((card) => ({ ...card, saved: savedIds.has(card.id) }));
+  }
+
   async getKarma(userId: string, window: LeaderboardWindow = 'weekly'): Promise<KarmaSummary> {
     const userEntries = this.seed.pointsLedger.filter((entry) => entry.userId === userId);
     const activityDates = userEntries.map((entry) => entry.createdAt);

@@ -7,6 +7,7 @@ import '../../features/account/presentation/notifications_screen.dart';
 import '../../features/account/presentation/profile_screen.dart';
 import '../../features/account/presentation/saved_screen.dart';
 import '../../features/auth/presentation/auth_form_screen.dart';
+import '../../features/auth/presentation/email_confirmed_screen.dart';
 import '../../features/auth/presentation/welcome_screen.dart';
 import '../../features/discovery/presentation/screens/deals_screen.dart';
 import '../../features/karma/presentation/karma_screen.dart';
@@ -27,6 +28,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/welcome',
         builder: (context, state) => const WelcomeScreen(),
+      ),
+      GoRoute(
+        path: '/auth/confirmed',
+        builder: (context, state) => const EmailConfirmedScreen(),
       ),
       GoRoute(
         path: '/auth/:mode',

@@ -137,7 +137,11 @@ class DealDropRepository {
         statusCode: 401,
       );
     }
-    return _apiClient.postJson('/v1/auth/bootstrap', authenticated: true);
+    final meta = response.user?.userMetadata ?? {};
+    return _apiClient.postJson('/v1/auth/bootstrap', authenticated: true, body: {
+      if (meta['display_name'] case final String name when name.isNotEmpty) 'displayName': name,
+      if (meta['home_neighborhood'] case final String n when n.isNotEmpty) 'homeNeighborhood': n,
+    });
   }
 
   Future<Map<String, dynamic>> _signUpWithSupabase({
@@ -146,19 +150,29 @@ class DealDropRepository {
     required String displayName,
     required String homeNeighborhood,
   }) async {
-    final response = await supabase.Supabase.instance.client.auth.signUp(
-      email: email,
-      password: password,
-      data: {
-        'display_name': displayName,
-        'home_neighborhood': homeNeighborhood,
-      },
-    );
-    if (response.session == null) {
-      throw const ApiException(
-        'Check your email to confirm your account before signing in.',
-        statusCode: 401,
+    final supabase.AuthResponse response;
+    try {
+      response = await supabase.Supabase.instance.client.auth.signUp(
+        email: email,
+        password: password,
+        data: {
+          'display_name': displayName,
+          'home_neighborhood': homeNeighborhood,
+        },
+        emailRedirectTo: Uri.base.resolve('/auth/confirmed').toString(),
       );
+    } on supabase.AuthException catch (e) {
+      final msg = e.message.toLowerCase();
+      if (msg.contains('already registered') || msg.contains('user_already_exists')) {
+        throw EmailAlreadyExistsException(email);
+      }
+      rethrow;
+    }
+    if (response.user?.identities?.isEmpty == true) {
+      throw EmailAlreadyExistsException(email);
+    }
+    if (response.session == null) {
+      throw EmailConfirmationRequiredException(email);
     }
     return _apiClient.postJson(
       '/v1/auth/bootstrap',
@@ -180,6 +194,40 @@ class DealDropRepository {
         return _decorateFeed(FeedPayload.fromJson(cached));
       }
       return _fallbackHomeFeed();
+    }
+  }
+
+  Future<List<Deal>> fetchAvailableListings({
+    required DateTime dateTime,
+  }) async {
+    final date =
+        '${dateTime.year.toString().padLeft(4, '0')}-'
+        '${dateTime.month.toString().padLeft(2, '0')}-'
+        '${dateTime.day.toString().padLeft(2, '0')}';
+    final time =
+        '${dateTime.hour.toString().padLeft(2, '0')}:'
+        '${dateTime.minute.toString().padLeft(2, '0')}';
+    final cacheKey = 'available-$date-$time';
+    try {
+      final response = await _apiClient.getJsonList(
+        '/v1/listings/available',
+        queryParameters: {'date': date, 'time': time},
+      );
+      final deals = response
+          .cast<Map<String, dynamic>>()
+          .map(Deal.fromCardJson)
+          .toList();
+      await _localStore.cacheJson(cacheKey, {'items': response});
+      return deals.map(_decorateDeal).toList();
+    } on ApiException {
+      final cached = _localStore.readCachedJson(cacheKey);
+      if (cached != null) {
+        return (cached['items'] as List)
+            .cast<Map<String, dynamic>>()
+            .map(Deal.fromCardJson)
+            .toList();
+      }
+      return <Deal>[];
     }
   }
 

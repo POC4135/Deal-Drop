@@ -179,6 +179,19 @@ async function main() {
     }
   }
 
+  await client.query(`delete from listing_schedules where listing_id = any($1)`, [atlantaSeed.schedules.map((s) => s.listingId)]);
+  for (const schedule of atlantaSeed.schedules) {
+    await client.query(
+      `insert into listing_schedules (id, listing_id, day_of_week, start_time_local, end_time_local, timezone)
+       values ($1, $2, $3, $4, $5, $6)
+       on conflict (id) do update set
+         day_of_week = excluded.day_of_week,
+         start_time_local = excluded.start_time_local,
+         end_time_local = excluded.end_time_local`,
+      [schedule.id, schedule.listingId, schedule.dayOfWeek, schedule.startTimeLocal, schedule.endTimeLocal, schedule.timezone],
+    );
+  }
+
   for (const entry of atlantaSeed.pointsLedger) {
     await client.query(
       `

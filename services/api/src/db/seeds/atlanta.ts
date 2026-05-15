@@ -83,10 +83,20 @@ export type SeedReport = {
   status: 'open' | 'resolved';
 };
 
+export type SeedSchedule = {
+  id: string;
+  listingId: string;
+  dayOfWeek: number; // 0=Sun, 1=Mon, ..., 6=Sat
+  startTimeLocal: string; // 'HH:MM'
+  endTimeLocal: string;   // 'HH:MM'
+  timezone: string;
+};
+
 export type LaunchSeedDataset = {
   users: SeedUser[];
   venues: SeedVenue[];
   listings: SeedListing[];
+  schedules: SeedSchedule[];
   contributions: SeedContribution[];
   reports: SeedReport[];
   pointsLedger: PointsLedgerEntry[];
@@ -463,6 +473,38 @@ export const atlantaSeed: LaunchSeedDataset = {
       sourceType: 'merchant',
       lastVerifiedAt: '2026-04-14T18:11:00.000Z',
     },
+  ],
+  // day_of_week: 0=Sun 1=Mon 2=Tue 3=Wed 4=Thu 5=Fri 6=Sat
+  schedules: [
+    // lst_taco_tuesday: Tue 4PM-10PM
+    { id: 'sch_taco_tue', listingId: 'lst_taco_tuesday', dayOfWeek: 2, startTimeLocal: '16:00', endTimeLocal: '22:00', timezone: 'America/New_York' },
+    // lst_bogo_ramen: Daily 6PM-9PM
+    { id: 'sch_ramen_sun', listingId: 'lst_bogo_ramen', dayOfWeek: 0, startTimeLocal: '18:00', endTimeLocal: '21:00', timezone: 'America/New_York' },
+    { id: 'sch_ramen_mon', listingId: 'lst_bogo_ramen', dayOfWeek: 1, startTimeLocal: '18:00', endTimeLocal: '21:00', timezone: 'America/New_York' },
+    { id: 'sch_ramen_tue', listingId: 'lst_bogo_ramen', dayOfWeek: 2, startTimeLocal: '18:00', endTimeLocal: '21:00', timezone: 'America/New_York' },
+    { id: 'sch_ramen_wed', listingId: 'lst_bogo_ramen', dayOfWeek: 3, startTimeLocal: '18:00', endTimeLocal: '21:00', timezone: 'America/New_York' },
+    { id: 'sch_ramen_thu', listingId: 'lst_bogo_ramen', dayOfWeek: 4, startTimeLocal: '18:00', endTimeLocal: '21:00', timezone: 'America/New_York' },
+    { id: 'sch_ramen_fri', listingId: 'lst_bogo_ramen', dayOfWeek: 5, startTimeLocal: '18:00', endTimeLocal: '21:00', timezone: 'America/New_York' },
+    { id: 'sch_ramen_sat', listingId: 'lst_bogo_ramen', dayOfWeek: 6, startTimeLocal: '18:00', endTimeLocal: '21:00', timezone: 'America/New_York' },
+    // lst_slice_combo: Daily 9PM-11:59PM (late night)
+    { id: 'sch_slice_sun', listingId: 'lst_slice_combo', dayOfWeek: 0, startTimeLocal: '21:00', endTimeLocal: '23:59', timezone: 'America/New_York' },
+    { id: 'sch_slice_mon', listingId: 'lst_slice_combo', dayOfWeek: 1, startTimeLocal: '21:00', endTimeLocal: '23:59', timezone: 'America/New_York' },
+    { id: 'sch_slice_tue', listingId: 'lst_slice_combo', dayOfWeek: 2, startTimeLocal: '21:00', endTimeLocal: '23:59', timezone: 'America/New_York' },
+    { id: 'sch_slice_wed', listingId: 'lst_slice_combo', dayOfWeek: 3, startTimeLocal: '21:00', endTimeLocal: '23:59', timezone: 'America/New_York' },
+    { id: 'sch_slice_thu', listingId: 'lst_slice_combo', dayOfWeek: 4, startTimeLocal: '21:00', endTimeLocal: '23:59', timezone: 'America/New_York' },
+    { id: 'sch_slice_fri', listingId: 'lst_slice_combo', dayOfWeek: 5, startTimeLocal: '21:00', endTimeLocal: '23:59', timezone: 'America/New_York' },
+    { id: 'sch_slice_sat', listingId: 'lst_slice_combo', dayOfWeek: 6, startTimeLocal: '21:00', endTimeLocal: '23:59', timezone: 'America/New_York' },
+    // lst_two_dollar_taco: Tue all day
+    { id: 'sch_twotaco_tue', listingId: 'lst_two_dollar_taco', dayOfWeek: 2, startTimeLocal: '00:00', endTimeLocal: '23:59', timezone: 'America/New_York' },
+    // lst_gyoza_bundle: Mon-Thu 5PM-8PM
+    { id: 'sch_gyoza_mon', listingId: 'lst_gyoza_bundle', dayOfWeek: 1, startTimeLocal: '17:00', endTimeLocal: '20:00', timezone: 'America/New_York' },
+    { id: 'sch_gyoza_tue', listingId: 'lst_gyoza_bundle', dayOfWeek: 2, startTimeLocal: '17:00', endTimeLocal: '20:00', timezone: 'America/New_York' },
+    { id: 'sch_gyoza_wed', listingId: 'lst_gyoza_bundle', dayOfWeek: 3, startTimeLocal: '17:00', endTimeLocal: '20:00', timezone: 'America/New_York' },
+    { id: 'sch_gyoza_thu', listingId: 'lst_gyoza_bundle', dayOfWeek: 4, startTimeLocal: '17:00', endTimeLocal: '20:00', timezone: 'America/New_York' },
+    // lst_happy_hour_pitcher: Wed-Fri 5PM-7PM
+    { id: 'sch_pitcher_wed', listingId: 'lst_happy_hour_pitcher', dayOfWeek: 3, startTimeLocal: '17:00', endTimeLocal: '19:00', timezone: 'America/New_York' },
+    { id: 'sch_pitcher_thu', listingId: 'lst_happy_hour_pitcher', dayOfWeek: 4, startTimeLocal: '17:00', endTimeLocal: '19:00', timezone: 'America/New_York' },
+    { id: 'sch_pitcher_fri', listingId: 'lst_happy_hour_pitcher', dayOfWeek: 5, startTimeLocal: '17:00', endTimeLocal: '19:00', timezone: 'America/New_York' },
   ],
   contributions: [
     {
