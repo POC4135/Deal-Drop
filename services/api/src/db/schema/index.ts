@@ -606,6 +606,29 @@ export const idempotencyKeys = pgTable('idempotency_keys', {
   expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
 });
 
+export const listingImageStatusEnum = pgEnum('listing_image_status', ['pending', 'active', 'deleted']);
+
+export const listingImages = pgTable(
+  'listing_images',
+  {
+    id: varchar('id', { length: 64 }).primaryKey(),
+    listingId: varchar('listing_id', { length: 64 })
+      .notNull()
+      .references(() => listings.id),
+    uploadedByUserId: varchar('uploaded_by_user_id', { length: 64 })
+      .references(() => users.id),
+    assetKey: varchar('asset_key', { length: 512 }).notNull(),
+    contentType: varchar('content_type', { length: 64 }).notNull().default('image/jpeg'),
+    status: listingImageStatusEnum('status').notNull().default('pending'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    listingImageListingIdx: index('listing_images_listing_idx').on(table.listingId, table.status),
+    listingImageUserIdx: index('listing_images_user_idx').on(table.uploadedByUserId),
+  }),
+);
+
 export const searchDocuments = pgTable(
   'search_documents',
   {

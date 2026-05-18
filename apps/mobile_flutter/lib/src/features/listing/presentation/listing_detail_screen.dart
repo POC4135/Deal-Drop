@@ -2,12 +2,14 @@ import 'package:dealdrop_design_tokens/dealdrop_design_tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/models/app_models.dart';
 import '../../../core/services/app_providers.dart';
 import '../../discovery/application/discovery_providers.dart';
 import '../../discovery/presentation/widgets/deal_card.dart';
+import '../application/listing_image_providers.dart';
 
 class ListingDetailScreen extends ConsumerWidget {
   const ListingDetailScreen({super.key, required this.listingId});
@@ -29,20 +31,33 @@ class ListingDetailScreen extends ConsumerWidget {
   }
 }
 
-class _DetailBody extends ConsumerWidget {
+class _DetailBody extends ConsumerStatefulWidget {
   const _DetailBody({required this.deal});
 
   final Deal deal;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_DetailBody> createState() => _DetailBodyState();
+}
+
+class _DetailBodyState extends ConsumerState<_DetailBody> {
+  bool _uploading = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final deal = widget.deal;
     final nearby = ref.watch(nearbyAlternativesProvider(deal));
+    final imagesAsync = ref.watch(listingImagesProvider(deal.id));
+
     return CustomScrollView(
       slivers: [
         SliverPadding(
           padding: const EdgeInsets.fromLTRB(16, 10, 16, 22),
           sliver: SliverList(
             delegate: SliverChildListDelegate.fixed([
+              // ------------------------------------------------------------------
+              // Top row: back + save
+              // ------------------------------------------------------------------
               Row(
                 children: [
                   _TopIconButton(
@@ -69,6 +84,10 @@ class _DetailBody extends ConsumerWidget {
                 ],
               ),
               const SizedBox(height: 12),
+
+              // ------------------------------------------------------------------
+              // Main info card
+              // ------------------------------------------------------------------
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -90,11 +109,7 @@ class _DetailBody extends ConsumerWidget {
                             color: deal.tone.surfaceTint,
                             borderRadius: BorderRadius.circular(14),
                           ),
-                          child: Icon(
-                            deal.icon,
-                            color: deal.tone.accent,
-                            size: 25,
-                          ),
+                          child: Icon(deal.icon, color: deal.tone.accent, size: 25),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
@@ -105,17 +120,16 @@ class _DetailBody extends ConsumerWidget {
                                 deal.venueName,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: Theme.of(
-                                  context,
-                                ).textTheme.headlineMedium,
+                                style: Theme.of(context).textTheme.headlineMedium,
                               ),
                               const SizedBox(height: 4),
                               Text(
                                 deal.valueHook,
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
-                                style: Theme.of(context).textTheme.bodyMedium
-                                    ?.copyWith(color: DealDropPalette.ink),
+                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                  color: DealDropPalette.ink,
+                                ),
                               ),
                             ],
                           ),
@@ -158,10 +172,7 @@ class _DetailBody extends ConsumerWidget {
                         ),
                         const SizedBox(width: 12),
                         Expanded(
-                          child: _HeroMetric(
-                            label: 'Updated',
-                            value: deal.lastUpdatedText,
-                          ),
+                          child: _HeroMetric(label: 'Updated', value: deal.lastUpdatedText),
                         ),
                       ],
                     ),
@@ -191,13 +202,55 @@ class _DetailBody extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: 12),
+
+              // ------------------------------------------------------------------
+              // Image gallery
+              // ------------------------------------------------------------------
+              _DetailSection(
+                title: 'Photos',
+                trailing: _uploading
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : TextButton.icon(
+                        onPressed: () => _pickAndUploadImage(deal.id),
+                        icon: const Icon(Icons.add_photo_alternate_outlined, size: 18),
+                        label: const Text('Add photo'),
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                      ),
+                child: imagesAsync.when(
+                  data: (urls) => _ImageGallery(urls: urls),
+                  error: (_, _) => Text(
+                    'Photos unavailable right now.',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                  loading: () => const SizedBox(
+                    height: 100,
+                    child: Center(child: CircularProgressIndicator()),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              // ------------------------------------------------------------------
+              // Value note
+              // ------------------------------------------------------------------
               Text(
                 deal.valueNote,
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyLarge?.copyWith(color: DealDropPalette.ink),
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  color: DealDropPalette.ink,
+                ),
               ),
               const SizedBox(height: 14),
+
+              // ------------------------------------------------------------------
+              // Trust & freshness
+              // ------------------------------------------------------------------
               _DetailSection(
                 title: 'Trust and freshness',
                 child: Column(
@@ -206,10 +259,7 @@ class _DetailBody extends ConsumerWidget {
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Icon(
-                          deal.trustBand.icon,
-                          color: deal.trustBand.foreground,
-                        ),
+                        Icon(deal.trustBand.icon, color: deal.trustBand.foreground),
                         const SizedBox(width: 10),
                         Expanded(
                           child: Text(
@@ -222,60 +272,47 @@ class _DetailBody extends ConsumerWidget {
                     const SizedBox(height: 16),
                     _InfoRow(label: 'Trust label', value: deal.trustBand.label),
                     _InfoRow(label: 'Freshness', value: deal.freshnessText),
-                    _InfoRow(
-                      label: 'Last updated',
-                      value: deal.lastUpdatedText,
-                    ),
-                    _InfoRow(
-                      label: 'Proof count',
-                      value: '${deal.trustSummary.proofCount} evidence items',
-                    ),
-                    _InfoRow(
-                      label: 'Recent confirmations',
-                      value: '${deal.trustSummary.recentConfirmations}',
-                    ),
-                    _InfoRow(
-                      label: 'Disputes',
-                      value: '${deal.trustSummary.disputeCount}',
-                    ),
+                    _InfoRow(label: 'Last updated', value: deal.lastUpdatedText),
+                    _InfoRow(label: 'Proof count', value: '${deal.trustSummary.proofCount} evidence items'),
+                    _InfoRow(label: 'Recent confirmations', value: '${deal.trustSummary.recentConfirmations}'),
+                    _InfoRow(label: 'Disputes', value: '${deal.trustSummary.disputeCount}'),
                   ],
                 ),
               ),
               const SizedBox(height: 18),
+
+              // ------------------------------------------------------------------
+              // Offer details
+              // ------------------------------------------------------------------
               _DetailSection(
                 title: 'Offer details',
                 child: Column(
                   children: [
-                    for (
-                      var index = 0;
-                      index < deal.offers.length;
-                      index++
-                    ) ...[
+                    for (var i = 0; i < deal.offers.length; i++) ...[
                       Row(
                         children: [
                           Expanded(
                             child: Text(
-                              deal.offers[index].title,
+                              deal.offers[i].title,
                               style: Theme.of(context).textTheme.titleMedium,
                             ),
                           ),
                           Text(
-                            '\$${deal.offers[index].originalPrice.toStringAsFixed(2)}',
-                            style: Theme.of(context).textTheme.bodyMedium
-                                ?.copyWith(
-                                  decoration: TextDecoration.lineThrough,
-                                ),
+                            '\$${deal.offers[i].originalPrice.toStringAsFixed(2)}',
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              decoration: TextDecoration.lineThrough,
+                            ),
                           ),
                           const SizedBox(width: 10),
                           Text(
-                            '\$${deal.offers[index].dealPrice.toStringAsFixed(2)}',
-                            style: Theme.of(context).textTheme.titleMedium
-                                ?.copyWith(color: DealDropPalette.success),
+                            '\$${deal.offers[i].dealPrice.toStringAsFixed(2)}',
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              color: DealDropPalette.success,
+                            ),
                           ),
                         ],
                       ),
-                      if (index < deal.offers.length - 1)
-                        const Divider(height: 22),
+                      if (i < deal.offers.length - 1) const Divider(height: 22),
                     ],
                     const SizedBox(height: 16),
                     _InfoRow(label: 'Restrictions', value: deal.conditions),
@@ -284,6 +321,10 @@ class _DetailBody extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: 14),
+
+              // ------------------------------------------------------------------
+              // Action buttons
+              // ------------------------------------------------------------------
               Row(
                 children: [
                   Expanded(
@@ -308,22 +349,24 @@ class _DetailBody extends ConsumerWidget {
                 ],
               ),
               const SizedBox(height: 18),
+
+              // ------------------------------------------------------------------
+              // Source note
+              // ------------------------------------------------------------------
               _DetailSection(
                 title: 'Source note',
-                child: Text(
-                  deal.sourceNote,
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
+                child: Text(deal.sourceNote, style: Theme.of(context).textTheme.bodyMedium),
               ),
               const SizedBox(height: 18),
+
+              // ------------------------------------------------------------------
+              // Nearby alternatives
+              // ------------------------------------------------------------------
               _DetailSection(
                 title: 'Nearby alternatives',
                 child: nearby.when(
                   data: (items) {
-                    final filtered = items
-                        .where((item) => item.id != deal.id)
-                        .take(2)
-                        .toList();
+                    final filtered = items.where((i) => i.id != deal.id).take(2).toList();
                     if (filtered.isEmpty) {
                       return Text(
                         'No nearby alternatives yet.',
@@ -337,15 +380,11 @@ class _DetailBody extends ConsumerWidget {
                               padding: const EdgeInsets.only(bottom: 14),
                               child: DealCard(
                                 deal: item,
-                                onTap: () =>
-                                    context.push('/listing/${item.id}'),
+                                onTap: () => context.push('/listing/${item.id}'),
                                 onSavePressed: () async {
                                   await ref
                                       .read(repositoryProvider)
-                                      .toggleFavorite(
-                                        item.id,
-                                        save: !item.saved,
-                                      );
+                                      .toggleFavorite(item.id, save: !item.saved);
                                   ref.invalidate(savedIdsProvider);
                                   ref.invalidate(savedDealsProvider);
                                 },
@@ -372,6 +411,39 @@ class _DetailBody extends ConsumerWidget {
     );
   }
 
+  Future<void> _pickAndUploadImage(String listingId) async {
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 85,
+      maxWidth: 1600,
+    );
+    if (picked == null || !mounted) return;
+
+    setState(() => _uploading = true);
+    try {
+      await ref.read(repositoryProvider).uploadListingImage(
+        listingId: listingId,
+        filePath: picked.path,
+        contentType: 'image/jpeg',
+      );
+      ref.invalidate(listingImagesProvider(listingId));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Photo uploaded successfully.')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Upload failed: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _uploading = false);
+    }
+  }
+
   Future<void> _openDirections(BuildContext context, Deal deal) async {
     final destination = deal.venueAddress.isNotEmpty
         ? '${deal.venueName}, ${deal.venueAddress}'
@@ -389,11 +461,158 @@ class _DetailBody extends ConsumerWidget {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Image gallery widget
+// ---------------------------------------------------------------------------
+
+class _ImageGallery extends StatelessWidget {
+  const _ImageGallery({required this.urls});
+
+  final List<String> urls;
+
+  @override
+  Widget build(BuildContext context) {
+    if (urls.isEmpty) {
+      return Container(
+        height: 100,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: DealDropPalette.warmSurface,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.photo_library_outlined, color: DealDropPalette.muted, size: 28),
+            const SizedBox(height: 6),
+            Text(
+              'No photos yet. Be the first to add one!',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: DealDropPalette.muted,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return SizedBox(
+      height: 140,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: urls.length,
+        separatorBuilder: (_, _) => const SizedBox(width: 10),
+        itemBuilder: (context, index) {
+          return GestureDetector(
+            onTap: () => _showFullImage(context, urls, index),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Image.network(
+                urls[index],
+                width: 140,
+                height: 140,
+                fit: BoxFit.cover,
+                errorBuilder: (_, _, _) => Container(
+                  width: 140,
+                  height: 140,
+                  color: DealDropPalette.warmSurface,
+                  child: const Icon(Icons.broken_image_outlined, color: DealDropPalette.muted),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  void _showFullImage(BuildContext context, List<String> urls, int initialIndex) {
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => _ImageViewerDialog(urls: urls, initialIndex: initialIndex),
+    );
+  }
+}
+
+class _ImageViewerDialog extends StatefulWidget {
+  const _ImageViewerDialog({required this.urls, required this.initialIndex});
+
+  final List<String> urls;
+  final int initialIndex;
+
+  @override
+  State<_ImageViewerDialog> createState() => _ImageViewerDialogState();
+}
+
+class _ImageViewerDialogState extends State<_ImageViewerDialog> {
+  late final PageController _pageController;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController(initialPage: widget.initialIndex);
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => Navigator.of(context).pop(),
+      child: Scaffold(
+        backgroundColor: Colors.black.withValues(alpha: 0.92),
+        body: SafeArea(
+          child: Stack(
+            children: [
+              PageView.builder(
+                controller: _pageController,
+                itemCount: widget.urls.length,
+                itemBuilder: (context, index) {
+                  return InteractiveViewer(
+                    child: Center(
+                      child: Image.network(
+                        widget.urls[index],
+                        fit: BoxFit.contain,
+                        errorBuilder: (_, _, _) => const Icon(
+                          Icons.broken_image_outlined,
+                          color: Colors.white54,
+                          size: 60,
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+              Positioned(
+                top: 8,
+                right: 8,
+                child: IconButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  icon: const Icon(Icons.close_rounded, color: Colors.white),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// _DetailSection with optional trailing widget
+// ---------------------------------------------------------------------------
+
 class _DetailSection extends StatelessWidget {
-  const _DetailSection({required this.title, required this.child});
+  const _DetailSection({required this.title, required this.child, this.trailing});
 
   final String title;
   final Widget child;
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
@@ -409,7 +628,14 @@ class _DetailSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: Theme.of(context).textTheme.titleMedium),
+          Row(
+            children: [
+              Expanded(
+                child: Text(title, style: Theme.of(context).textTheme.titleMedium),
+              ),
+              if (trailing != null) trailing!,
+            ],
+          ),
           const SizedBox(height: 10),
           child,
         ],
@@ -417,6 +643,10 @@ class _DetailSection extends StatelessWidget {
     );
   }
 }
+
+// ---------------------------------------------------------------------------
+// Reusable detail widgets
+// ---------------------------------------------------------------------------
 
 class _HeroMetric extends StatelessWidget {
   const _HeroMetric({required this.label, required this.value});
@@ -437,16 +667,16 @@ class _HeroMetric extends StatelessWidget {
         children: [
           Text(
             label.toUpperCase(),
-            style: Theme.of(
-              context,
-            ).textTheme.labelMedium?.copyWith(color: DealDropPalette.muted),
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+              color: DealDropPalette.muted,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
             value,
-            style: Theme.of(
-              context,
-            ).textTheme.titleMedium?.copyWith(color: DealDropPalette.ink),
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              color: DealDropPalette.ink,
+            ),
           ),
         ],
       ),

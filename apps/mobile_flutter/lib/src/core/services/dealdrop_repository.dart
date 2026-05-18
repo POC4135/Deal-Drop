@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 
 import '../models/app_models.dart';
@@ -347,6 +350,7 @@ class DealDropRepository {
             confidenceScore: item.confidenceScore,
             affordabilityLabel: item.affordabilityLabel,
             saved: favorites.contains(item.listingId),
+            tags: item.tags,
           ),
         )
         .toList();
@@ -710,6 +714,50 @@ class DealDropRepository {
       idempotent: true,
     );
     return response['assetKey'] as String? ?? '';
+  }
+
+  Future<List<String>> fetchListingImages(String listingId) async {
+    try {
+      final response = await _apiClient.getJsonList('/v1/listings/$listingId/images');
+      return response.map((item) => (item as Map<String, dynamic>)['url'] as String).toList();
+    } on ApiException {
+      return const [];
+    }
+  }
+
+  Future<void> uploadListingImage({
+    required String listingId,
+    required String filePath,
+    required String contentType,
+  }) async {
+    // Step 1: Presign
+    final presign = await _apiClient.postJson(
+      '/v1/listings/$listingId/images/presign',
+      authenticated: true,
+      body: {'contentType': contentType},
+      idempotent: true,
+    );
+    final uploadUrl = presign['uploadUrl'] as String;
+    final assetKey = presign['assetKey'] as String;
+
+    // Step 2: Upload bytes directly to the presigned URL
+    final bytes = await File(filePath).readAsBytes();
+    final uploadResponse = await http.put(
+      Uri.parse(uploadUrl),
+      headers: {'Content-Type': contentType},
+      body: bytes,
+    );
+    if (uploadResponse.statusCode >= 300) {
+      throw ApiException('Image upload failed: ${uploadResponse.statusCode}', statusCode: uploadResponse.statusCode);
+    }
+
+    // Step 3: Confirm the upload with the backend
+    await _apiClient.postJson(
+      '/v1/listings/$listingId/images/confirm',
+      authenticated: true,
+      body: {'assetKey': assetKey},
+      idempotent: true,
+    );
   }
 
   Future<List<OfflineMutation>> flushOfflineQueue() async {
