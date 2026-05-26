@@ -137,9 +137,10 @@ class _MapScreenState extends ConsumerState<MapScreen> {
               child: canRenderInteractiveMap
                   ? GoogleMap(
                       initialCameraPosition: _atlanta,
-                      cloudMapId: config.googleMapsMapId.isNotEmpty
+                      mapId: config.googleMapsMapId.isNotEmpty
                           ? config.googleMapsMapId
                           : null,
+                      style: kIsWeb ? null : _kMapStyle,
                       myLocationEnabled: !_locationDenied,
                       myLocationButtonEnabled: false,
                       compassEnabled: false,
@@ -150,7 +151,6 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                       trafficEnabled: false,
                       onMapCreated: (controller) async {
                         _controller = controller;
-                        if (!kIsWeb) await controller.setMapStyle(_kMapStyle);
                         await Future<void>.delayed(
                           const Duration(milliseconds: 250),
                         );
@@ -452,7 +452,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             ? await _buildWebMarker(band)
             : await _buildCustomMarker(band);
         _markerIconCache[band] = icon;
-      } catch (_) {
+      } catch (e, st) {
+        debugPrint('[MapScreen] custom marker failed for $band: $e\n$st');
         // fallback handled in _buildMarkers via ?? operator
       }
     }
@@ -462,7 +463,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   // Web-compatible marker using SVG encoded as PNG bytes via dart:ui
   Future<BitmapDescriptor> _buildWebMarker(TrustBand band) async {
     final color = _bandColor(band);
-    final hex = color.value.toRadixString(16).padLeft(8, '0').substring(2);
+    final hex = color.toARGB32().toRadixString(16).padLeft(8, '0').substring(2);
     final isStar = band == TrustBand.founderVerified;
     final starPath = isStar
         ? '<polygon points="20,6 23.5,15 33,15 25.5,21 28,30 20,24.5 12,30 14.5,21 7,15 16.5,15" fill="white"/>'
