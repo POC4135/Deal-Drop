@@ -1,0 +1,39 @@
+import type { FastifyInstance } from 'fastify';
+import { z } from 'zod';
+
+const bodySchema = z.object({
+  title: z.string().min(1).max(200),
+  description: z.string().max(2000).default(''),
+  metadata: z.record(z.string()).default({}),
+});
+
+export async function registerFeedbackRoutes(app: FastifyInstance): Promise<void> {
+  app.post('/v1/feedback', async (request, reply) => {
+    const webhookUrl = process.env.SLACK_FEEDBACK_WEBHOOK_URL;
+    if (!webhookUrl) {
+      return reply.status(503).send({ error: 'Feedback reporting is not configured.' });
+    }
+
+    const { description, metadata } = bodySchema.parse(request.body);
+
+    const isSuggestion = metadata.type === 'suggestion';
+    const lines = [
+      isSuggestion ? '*💡 Suggestion*' : '*🐛 Bug Report*',
+      `*Details:* ${description}`,
+      '',
+      ...(metadata.user     ? [`*Reporter:*  ${metadata.user} (${metadata.email})`] : ['*Reporter:*  Guest']),
+      ...(metadata.route    ? [`*Screen:*    \`${metadata.route}\``]    : []),
+      ...(metadata.platform ? [`*Platform:*  ${metadata.platform}`]     : []),
+      ...(metadata.screen   ? [`*Viewport:*  ${metadata.screen}`]       : []),
+      `*Time:*     ${new Date().toUTCString()}`,
+    ];
+
+    await fetch(webhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: lines.join('\n') }),
+    });
+
+    return reply.status(204).send();
+  });
+}

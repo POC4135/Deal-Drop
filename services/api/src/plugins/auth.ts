@@ -77,7 +77,7 @@ export async function registerAuth(app: FastifyInstance): Promise<void> {
       userId: claims.sub,
       email: claims.email ?? 'unknown@dealdrop.app',
       role: appRole,
-      displayName: claims.username ?? claims.email ?? claims.sub,
+      displayName: claims.user_metadata?.display_name ?? claims.username ?? claims.email ?? claims.sub,
       verifiedContributor: appRole !== 'user',
     };
   });

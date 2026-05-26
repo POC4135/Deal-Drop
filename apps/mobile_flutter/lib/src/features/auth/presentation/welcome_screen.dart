@@ -62,7 +62,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                 ),
                 const SizedBox(height: 22),
                 Text(
-                  'DealDrop',
+                  'Hapora',
                   style: Theme.of(context).textTheme.displayLarge,
                 ),
                 const SizedBox(height: 10),

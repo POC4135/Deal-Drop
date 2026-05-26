@@ -64,6 +64,10 @@ export const authClaimSchema = z.object({
   role: z.string().optional(),
   app_role: z.enum(['user', 'moderator', 'admin']).optional(),
   username: z.string().optional(),
+  user_metadata: z.object({
+    display_name: z.string().optional(),
+    home_neighborhood: z.string().optional(),
+  }).optional(),
 });
 
 export type AuthClaims = z.infer<typeof authClaimSchema>;

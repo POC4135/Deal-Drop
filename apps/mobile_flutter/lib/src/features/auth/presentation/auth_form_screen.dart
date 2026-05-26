@@ -25,6 +25,8 @@ class _AuthFormScreenState extends ConsumerState<AuthFormScreen> {
 
   bool _submitting = false;
   String? _error;
+  String? _confirmationEmail;
+  bool _emailExists = false;
 
   bool get _signIn => widget.mode == 'sign-in';
 
@@ -49,6 +51,13 @@ class _AuthFormScreenState extends ConsumerState<AuthFormScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_confirmationEmail != null) {
+      return _ConfirmEmailScreen(
+        email: _confirmationEmail!,
+        onGoToSignIn: () => context.go('/auth/sign-in'),
+      );
+    }
+
     final title = _signIn ? 'Sign in' : 'Create account';
     final subtitle = _signIn ? 'Sync saves.' : 'Save deals. Earn Karma.';
 
@@ -79,7 +88,7 @@ class _AuthFormScreenState extends ConsumerState<AuthFormScreen> {
                     ),
                     const SizedBox(width: 10),
                     Text(
-                      'DealDrop',
+                      'Hapora',
                       style: Theme.of(context).textTheme.headlineMedium
                           ?.copyWith(color: DealDropPalette.goldDeep),
                     ),
@@ -138,6 +147,9 @@ class _AuthFormScreenState extends ConsumerState<AuthFormScreen> {
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
                   textInputAction: TextInputAction.next,
+                  onChanged: (_) {
+                    if (_emailExists) setState(() => _emailExists = false);
+                  },
                   validator: (value) {
                     final email = (value ?? '').trim();
                     if (!email.contains('@')) {
@@ -150,6 +162,40 @@ class _AuthFormScreenState extends ConsumerState<AuthFormScreen> {
                     hintText: 'you@email.com',
                   ),
                 ),
+                if (_emailExists) ...[
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.info_outline_rounded,
+                        size: 16,
+                        color: DealDropPalette.muted,
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          'An account with this email already exists. ',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: () => context.go(
+                          widget.redirectTo == null
+                              ? '/auth/sign-in'
+                              : '/auth/sign-in?from=${Uri.encodeComponent(widget.redirectTo!)}',
+                        ),
+                        child: Text(
+                          'Sign in instead',
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: DealDropPalette.goldDeep,
+                                fontWeight: FontWeight.w600,
+                              ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
                 const SizedBox(height: 14),
                 _FieldLabel('Password'),
                 const SizedBox(height: 8),
@@ -192,7 +238,7 @@ class _AuthFormScreenState extends ConsumerState<AuthFormScreen> {
                     child: Text(
                       _submitting
                           ? 'Working...'
-                          : (_signIn ? 'Enter DealDrop' : 'Create account'),
+                          : (_signIn ? 'Enter Hapora' : 'Create account'),
                     ),
                   ),
                 ),
@@ -266,9 +312,17 @@ class _AuthFormScreenState extends ConsumerState<AuthFormScreen> {
         return;
       }
       context.go(widget.redirectTo ?? '/deals');
+    } on EmailAlreadyExistsException {
+      setState(() {
+        _emailExists = true;
+      });
+    } on EmailConfirmationRequiredException catch (error) {
+      setState(() {
+        _confirmationEmail = error.email;
+      });
     } catch (error) {
       setState(() {
-        _error = error is ApiException ? error.message : '$error';
+        _error = _friendlyAuthError(error);
       });
     } finally {
       if (mounted) {
@@ -277,6 +331,92 @@ class _AuthFormScreenState extends ConsumerState<AuthFormScreen> {
         });
       }
     }
+  }
+
+  String _friendlyAuthError(Object error) {
+    if (error is ApiException) return error.message;
+    final raw = '$error'.toLowerCase();
+    if (raw.contains('invalid_credentials') || raw.contains('invalid login')) {
+      return 'Incorrect email or password. Please try again.';
+    }
+    if (raw.contains('email_not_confirmed')) {
+      return 'Please confirm your email before signing in.';
+    }
+    if (raw.contains('too_many_requests') || raw.contains('rate limit')) {
+      return 'Too many attempts. Please wait a moment and try again.';
+    }
+    if (raw.contains('user_not_found')) {
+      return 'No account found with that email.';
+    }
+    return 'Something went wrong. Please try again.';
+  }
+}
+
+class _ConfirmEmailScreen extends StatelessWidget {
+  const _ConfirmEmailScreen({required this.email, required this.onGoToSignIn});
+
+  final String email;
+  final VoidCallback onGoToSignIn;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(28, 40, 28, 28),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEAF6ED),
+                  borderRadius: BorderRadius.circular(18),
+                ),
+                child: const Icon(
+                  Icons.mark_email_read_outlined,
+                  size: 30,
+                  color: Color(0xFF2D7A3A),
+                ),
+              ),
+              const SizedBox(height: 24),
+              Text(
+                'Check your inbox',
+                style: Theme.of(context).textTheme.displayMedium,
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'We sent a confirmation link to',
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+              const SizedBox(height: 2),
+              Text(
+                email,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Click the link in the email, then come back here to sign in.',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: const Color(0xFF7A7670),
+                ),
+              ),
+              const SizedBox(height: 36),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: onGoToSignIn,
+                  child: const Text('Go to sign in'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 

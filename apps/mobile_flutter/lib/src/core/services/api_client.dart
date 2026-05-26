@@ -16,6 +16,18 @@ class ApiException implements Exception {
       'ApiException(statusCode: $statusCode, message: $message)';
 }
 
+class EmailConfirmationRequiredException implements Exception {
+  const EmailConfirmationRequiredException(this.email);
+
+  final String email;
+}
+
+class EmailAlreadyExistsException implements Exception {
+  const EmailAlreadyExistsException(this.email);
+
+  final String email;
+}
+
 class DealDropApiClient {
   DealDropApiClient({
     required AppConfig config,

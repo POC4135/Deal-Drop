@@ -15,6 +15,7 @@ import { registerLeaderboardRoutes } from '../modules/leaderboards/routes.js';
 import { registerFavoriteRoutes } from '../modules/favorites/routes.js';
 import { registerListingRoutes } from '../modules/listings/routes.js';
 import { registerNotificationRoutes } from '../modules/notifications/routes.js';
+import { registerFeedbackRoutes } from '../modules/feedback/routes.js';
 import { registerTelemetryRoutes } from '../modules/telemetry/routes.js';
 import { registerAuth } from '../plugins/auth.js';
 import { registerErrorHandler } from '../plugins/error-handler.js';
@@ -56,6 +57,7 @@ export async function createApp() {
   await registerLeaderboardRoutes(app, platform);
   await registerTelemetryRoutes(app, platform);
   await registerAdminRoutes(app, platform);
+  await registerFeedbackRoutes(app);
 
   return app;
 }

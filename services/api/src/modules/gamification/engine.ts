@@ -58,7 +58,7 @@ export function computeLeaderboard(
   users: Array<{ id: string; displayName: string; verifiedContributor: boolean }>,
   window: LeaderboardWindow,
 ): LeaderboardEntry[] {
-  const now = new Date('2026-04-14T23:59:59.000Z');
+  const now = new Date();
   const lookbackDays = window === 'daily' ? 1 : window === 'weekly' ? 7 : 3650;
   const cutoff = now.getTime() - lookbackDays * 24 * 60 * 60 * 1000;
 
@@ -98,8 +98,9 @@ export function buildKarmaSummary(input: {
   badges: BadgeDefinition[];
   window: LeaderboardWindow;
 }): KarmaSummary {
-  const points = computeFinalizedPoints(input.entries);
-  const pendingPoints = computePendingPoints(input.entries);
+  const userEntries = input.entries.filter((entry) => entry.userId === input.userId);
+  const points = computeFinalizedPoints(userEntries);
+  const pendingPoints = computePendingPoints(userEntries);
   const user = input.users.find((candidate) => candidate.id === input.userId);
 
   return {

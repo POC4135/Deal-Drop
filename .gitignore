@@ -64,3 +64,9 @@ infra/local/minio-data/
 .env
 .env.local
 .env.*.local
+
+# Claude Code
+CLAUDE.md
+
+# Source assets (not part of the app)
+hapora-logo.png

@@ -1,3 +1,5 @@
+import 'dotenv/config';
+
 import { Client } from 'pg';
 
 import { parseRuntimeEnv } from '@dealdrop/config';
@@ -6,7 +8,17 @@ import { atlantaSeed } from '../seeds/atlanta.js';
 
 async function main() {
   const env = parseRuntimeEnv(process.env);
-  const client = new Client({ connectionString: env.DATABASE_URL });
+  const match = env.DATABASE_URL.match(/^postgres(?:ql)?:\/\/([^:]+):([^@]+)@([^:/]+):?(\d*)\/(.+)$/);
+  if (!match) throw new Error('Could not parse DATABASE_URL');
+  const [, user, password, host, port, database] = match;
+  const client = new Client({
+    host,
+    port: Number(port) || 5432,
+    database,
+    user,
+    password,
+    ssl: host.includes('supabase') ? { rejectUnauthorized: false } : false,
+  });
   await client.connect();
 
   for (const user of atlantaSeed.users) {
@@ -165,6 +177,19 @@ async function main() {
         [offer.id, listing.id, offer.title, offer.originalPrice, offer.dealPrice, offer.currency],
       );
     }
+  }
+
+  await client.query(`delete from listing_schedules where listing_id = any($1)`, [atlantaSeed.schedules.map((s) => s.listingId)]);
+  for (const schedule of atlantaSeed.schedules) {
+    await client.query(
+      `insert into listing_schedules (id, listing_id, day_of_week, start_time_local, end_time_local, timezone)
+       values ($1, $2, $3, $4, $5, $6)
+       on conflict (id) do update set
+         day_of_week = excluded.day_of_week,
+         start_time_local = excluded.start_time_local,
+         end_time_local = excluded.end_time_local`,
+      [schedule.id, schedule.listingId, schedule.dayOfWeek, schedule.startTimeLocal, schedule.endTimeLocal, schedule.timezone],
+    );
   }
 
   for (const entry of atlantaSeed.pointsLedger) {

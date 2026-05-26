@@ -7,6 +7,7 @@ import '../../features/account/presentation/notifications_screen.dart';
 import '../../features/account/presentation/profile_screen.dart';
 import '../../features/account/presentation/saved_screen.dart';
 import '../../features/auth/presentation/auth_form_screen.dart';
+import '../../features/auth/presentation/email_confirmed_screen.dart';
 import '../../features/auth/presentation/welcome_screen.dart';
 import '../../features/discovery/presentation/screens/deals_screen.dart';
 import '../../features/karma/presentation/karma_screen.dart';
@@ -17,13 +18,20 @@ import '../../features/post/presentation/post_screen.dart';
 import '../../features/search/presentation/search_screen.dart';
 import '../widgets/dealdrop_bottom_nav.dart';
 
+final rootNavigatorKey = GlobalKey<NavigatorState>();
+
 final appRouterProvider = Provider<GoRouter>((ref) {
-  return GoRouter(
+  final router = GoRouter(
+    navigatorKey: rootNavigatorKey,
     initialLocation: '/welcome',
     routes: [
       GoRoute(
         path: '/welcome',
         builder: (context, state) => const WelcomeScreen(),
+      ),
+      GoRoute(
+        path: '/auth/confirmed',
+        builder: (context, state) => const EmailConfirmedScreen(),
       ),
       GoRoute(
         path: '/auth/:mode',
@@ -129,6 +137,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
     ],
   );
+
+  ref.onDispose(router.dispose);
+  return router;
 });
 
 class DealDropShell extends StatelessWidget {

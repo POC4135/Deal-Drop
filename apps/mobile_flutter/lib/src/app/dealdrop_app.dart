@@ -3,7 +3,10 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:pointer_interceptor/pointer_interceptor.dart';
+
 import '../core/services/app_providers.dart';
+import '../features/map/presentation/bug_report_overlay.dart';
 import 'router/app_router.dart';
 import 'theme/app_theme.dart';
 
@@ -17,6 +20,7 @@ class DealDropApp extends ConsumerStatefulWidget {
 class _DealDropAppState extends ConsumerState<DealDropApp>
     with WidgetsBindingObserver {
   StreamSubscription<String>? _pushDeepLinkSubscription;
+  bool _overlayReady = false;
 
   @override
   void initState() {
@@ -26,6 +30,9 @@ class _DealDropAppState extends ConsumerState<DealDropApp>
         .read(pushNotificationServiceProvider)
         .deepLinks
         .listen(_openPushDeepLink);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) setState(() => _overlayReady = true);
+    });
   }
 
   @override
@@ -53,6 +60,22 @@ class _DealDropAppState extends ConsumerState<DealDropApp>
       debugShowCheckedModeBanner: false,
       routerConfig: router,
       theme: buildDealDropTheme(),
+      builder: (context, child) {
+        final bottomPadding = MediaQuery.of(context).padding.bottom;
+        return Stack(
+          children: [
+            child!,
+            if (_overlayReady)
+              Positioned(
+                left: 16,
+                bottom: bottomPadding + 108,
+                child: PointerInterceptor(
+                  child: const BugReportButton(),
+                ),
+              ),
+          ],
+        );
+      },
     );
   }
 
