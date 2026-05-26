@@ -157,7 +157,6 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                       trafficEnabled: false,
                       onMapCreated: (controller) async {
                         _controller = controller;
-                        await controller.setMapStyle(_kMapStyle);
                         await Future<void>.delayed(
                           const Duration(milliseconds: 250),
                         );
@@ -520,10 +519,80 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   Future<void> _preloadMarkerIcons() async {
     for (final band in TrustBand.values) {
       if (_markerIconCache.containsKey(band)) continue;
-      final icon = await _buildCustomMarker(band);
-      _markerIconCache[band] = icon;
+      try {
+        final icon = kIsWeb
+            ? await _buildWebMarker(band)
+            : await _buildCustomMarker(band);
+        _markerIconCache[band] = icon;
+      } catch (e, st) {
+        debugPrint('[MapScreen] custom marker failed for $band: $e\n$st');
+        // fallback handled in _buildMarkers via ?? operator
+      }
     }
     if (mounted) setState(() {});
+  }
+
+  // Web-compatible marker using SVG encoded as PNG bytes via dart:ui
+  Future<BitmapDescriptor> _buildWebMarker(TrustBand band) async {
+    final color = _bandColor(band);
+    final hex = color.toARGB32().toRadixString(16).padLeft(8, '0').substring(2);
+    final isStar = band == TrustBand.founderVerified;
+    final starPath = isStar
+        ? '<polygon points="20,6 23.5,15 33,15 25.5,21 28,30 20,24.5 12,30 14.5,21 7,15 16.5,15" fill="white"/>'
+        : '<circle cx="20" cy="18" r="5" fill="white"/>';
+    final svg = '''<svg xmlns="http://www.w3.org/2000/svg" width="40" height="52">
+  <filter id="s"><feDropShadow dx="0" dy="2" stdDeviation="2" flood-opacity="0.3"/></filter>
+  <g filter="url(#s)">
+    <rect x="2" y="2" width="36" height="34" rx="12" ry="12" fill="#$hex"/>
+    <polygon points="20,46 12,36 28,36" fill="#$hex"/>
+    <rect x="2" y="2" width="36" height="34" rx="12" ry="12" fill="none" stroke="white" stroke-width="2"/>
+  </g>
+  $starPath
+</svg>''';
+
+    final bytes = svg.codeUnits;
+    // Encode SVG as PNG via canvas
+    final recorder = ui.PictureRecorder();
+    final canvas = Canvas(recorder, const Rect.fromLTWH(0, 0, 40, 52));
+    void unused(dynamic _) {}
+    unused(bytes);
+    // Draw the pin shape directly since SVG decode isn't available in dart:ui
+    final bodyPaint = Paint()..color = color;
+    final borderPaint = Paint()
+      ..color = Colors.white
+      ..strokeWidth = 2
+      ..style = PaintingStyle.stroke;
+    final shadowPaint = Paint()
+      ..color = Colors.black.withValues(alpha: 0.25)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3);
+
+    canvas.drawRRect(RRect.fromLTRBR(2, 4, 38, 38, const Radius.circular(12)), shadowPaint);
+    canvas.drawRRect(RRect.fromLTRBR(2, 2, 38, 36, const Radius.circular(12)), bodyPaint);
+    canvas.drawRRect(RRect.fromLTRBR(2, 2, 38, 36, const Radius.circular(12)), borderPaint);
+
+    final tipPath = Path()
+      ..moveTo(12, 36)
+      ..lineTo(28, 36)
+      ..lineTo(20, 48)
+      ..close();
+    canvas.drawPath(tipPath, bodyPaint);
+    final tipBorder = Paint()
+      ..color = Colors.white
+      ..strokeWidth = 2
+      ..style = PaintingStyle.stroke
+      ..strokeJoin = StrokeJoin.round;
+    canvas.drawPath(tipPath, tipBorder);
+
+    final iconPaint = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.fill;
+    _drawPinIcon(canvas, const Offset(20, 19), 16, iconPaint, band);
+
+    final picture = recorder.endRecording();
+    final image = await picture.toImage(40, 52);
+    final data = await image.toByteData(format: ui.ImageByteFormat.png);
+    if (data == null) throw Exception('toByteData returned null');
+    return BitmapDescriptor.bytes(data.buffer.asUint8List(), imagePixelRatio: 1.0);
   }
 
   Future<BitmapDescriptor> _buildCustomMarker(TrustBand band) async {
@@ -537,7 +606,6 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     final recorder = ui.PictureRecorder();
     final canvas = Canvas(recorder, const Rect.fromLTWH(0, 0, size, size));
 
-    // Shadow
     final shadowPaint = Paint()
       ..color = Colors.black.withValues(alpha: 0.22)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
@@ -550,7 +618,6 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       shadowPaint,
     );
 
-    // Pin body path
     final color = _bandColor(band);
     final bodyPaint = Paint()..color = color;
     final borderPaint = Paint()
@@ -562,17 +629,13 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     final top = (size - pinH) / 2 - 4;
     final bodyRect = RRect.fromLTRBR(left, top, left + pinW, top + pinH - tipH, const Radius.circular(radius));
 
-    // Draw drop shadow for pin
     final shadowPinPaint = Paint()
       ..color = color.withValues(alpha: 0.35)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5);
     canvas.drawRRect(bodyRect, shadowPinPaint);
-
-    // Draw pin body
     canvas.drawRRect(bodyRect, bodyPaint);
     canvas.drawRRect(bodyRect, borderPaint);
 
-    // Tip triangle
     final tipPath = Path()
       ..moveTo(left + pinW / 2 - 8, top + pinH - tipH)
       ..lineTo(left + pinW / 2 + 8, top + pinH - tipH)
@@ -586,22 +649,18 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       ..strokeJoin = StrokeJoin.round;
     canvas.drawPath(tipPath, tipBorderPaint);
 
-    // Icon inside pin
     final iconCenter = Offset(size / 2, top + (pinH - tipH) / 2);
     final iconPaint = Paint()
       ..color = Colors.white
       ..style = PaintingStyle.fill;
 
-    // Draw a simple icon shape (fork or glass)
     _drawPinIcon(canvas, iconCenter, iconSize, iconPaint, band);
 
     final picture = recorder.endRecording();
     final image = await picture.toImage(size.toInt(), size.toInt());
     final data = await image.toByteData(format: ui.ImageByteFormat.png);
-    return BitmapDescriptor.bytes(
-      data!.buffer.asUint8List(),
-      imagePixelRatio: 2.0,
-    );
+    if (data == null) throw Exception('toByteData returned null');
+    return BitmapDescriptor.bytes(data.buffer.asUint8List(), imagePixelRatio: 2.0);
   }
 
   void _drawPinIcon(Canvas canvas, Offset center, double size, Paint paint, TrustBand band) {
