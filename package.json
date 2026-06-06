@@ -13,5 +13,8 @@
     "test": "pnpm -r --if-present test",
     "db:migrate": "pnpm --filter @dealdrop/api db:migrate",
     "db:seed": "pnpm --filter @dealdrop/api db:seed"
+  },
+  "dependencies": {
+    "vercel": "^54.9.1"
   }
 }

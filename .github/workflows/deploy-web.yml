@@ -2,7 +2,7 @@ name: Deploy Flutter Web to Vercel
 
 on:
   push:
-    branches: [deploy/vercel-web]
+    branches: [main]
   workflow_dispatch:
 
 jobs:
@@ -26,6 +26,8 @@ jobs:
         run: |
           flutter build web --release \
             --dart-define=DEALDROP_API_BASE_URL=${{ vars.DEALDROP_API_BASE_URL }} \
+            --dart-define=SUPABASE_URL=${{ secrets.SUPABASE_URL }} \
+            --dart-define=SUPABASE_PUBLISHABLE_KEY=${{ secrets.SUPABASE_PUBLISHABLE_KEY }} \
             --dart-define=GOOGLE_MAPS_API_KEY=${{ secrets.GOOGLE_MAPS_API_KEY }}
 
       - name: Copy Vercel config into build output
