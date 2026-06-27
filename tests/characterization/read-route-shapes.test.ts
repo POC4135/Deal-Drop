@@ -18,13 +18,30 @@ import { createApp } from '../../services/api/src/app/create-app.js';
 import { stripVolatile } from './_support.js';
 
 let app: Awaited<ReturnType<typeof createApp>>;
+const priorEnv: Record<string, string | undefined> = {};
 
 beforeAll(async () => {
+  // Phase 1 characterization is hermetic: pin the in-memory seed backend and dev
+  // auth so the response shapes are deterministic and identical everywhere,
+  // independent of CI's PLATFORM_BACKEND=postgres. The real Postgres responses
+  // are characterized in the Phase 2 integration tier.
+  for (const key of ['PLATFORM_BACKEND', 'USE_DEV_AUTH'] as const) {
+    priorEnv[key] = process.env[key];
+  }
+  process.env.PLATFORM_BACKEND = 'seed';
+  process.env.USE_DEV_AUTH = 'true';
   app = await createApp();
 });
 
 afterAll(async () => {
   await app.close();
+  for (const [key, value] of Object.entries(priorEnv)) {
+    if (value === undefined) {
+      delete process.env[key];
+    } else {
+      process.env[key] = value;
+    }
+  }
 });
 
 async function snapshotGet(url: string) {

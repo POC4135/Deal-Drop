@@ -38,13 +38,29 @@ const ROUTES: Array<{ label: string; method: 'GET'; url: string }> = [
 ];
 
 let app: Awaited<ReturnType<typeof createApp>>;
+const priorEnv: Record<string, string | undefined> = {};
 
 beforeAll(async () => {
+  // Phase 1 characterization is hermetic: pin the in-memory seed backend and dev
+  // auth so the RBAC matrix is deterministic and identical everywhere,
+  // independent of CI's PLATFORM_BACKEND=postgres (which would require a live DB).
+  for (const key of ['PLATFORM_BACKEND', 'USE_DEV_AUTH'] as const) {
+    priorEnv[key] = process.env[key];
+  }
+  process.env.PLATFORM_BACKEND = 'seed';
+  process.env.USE_DEV_AUTH = 'true';
   app = await createApp();
 });
 
 afterAll(async () => {
   await app.close();
+  for (const [key, value] of Object.entries(priorEnv)) {
+    if (value === undefined) {
+      delete process.env[key];
+    } else {
+      process.env[key] = value;
+    }
+  }
 });
 
 describe('auth/RBAC — status-code matrix (dev auth)', () => {
