@@ -1,0 +1,20 @@
+# gitleaks config for DealDrop. Used by scripts/security-scan.sh when gitleaks
+# is installed. Extends the default ruleset and allowlists known test fixtures
+# so the seed dev password etc. don't trip the secrets gate.
+title = "DealDrop gitleaks"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Local test/seed fixtures — not real credentials"
+regexes = [
+  '''dealdrop123''',                         # documented local seed password (README)
+  '''postgres://postgres:postgres@''',       # local docker-compose DSN
+  '''minio123''',                            # local docker-compose MinIO secret
+]
+paths = [
+  '''tests/.*''',
+  '''infra/local/docker-compose\.yml''',
+  '''README\.md''',
+]

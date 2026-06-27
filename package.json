@@ -11,7 +11,19 @@
     "typecheck": "pnpm -r --if-present typecheck",
     "lint": "pnpm -r --if-present lint",
     "test": "pnpm -r --if-present test",
+    "test:smoke": "bash scripts/test.sh smoke",
+    "test:unit": "bash scripts/test.sh unit",
+    "test:gate": "bash scripts/test.sh gate",
+    "test:full": "bash scripts/test.sh full",
+    "test:changed": "bash scripts/test.sh changed",
+    "test:flaky": "bash scripts/flaky-detect.sh",
+    "security:scan": "bash scripts/security-scan.sh",
     "db:migrate": "pnpm --filter @dealdrop/api db:migrate",
     "db:seed": "pnpm --filter @dealdrop/api db:seed"
+  },
+  "devDependencies": {
+    "@stryker-mutator/core": "^8.7.1",
+    "@stryker-mutator/vitest-runner": "^8.7.1",
+    "@vitest/coverage-v8": "3.2.4"
   }
 }

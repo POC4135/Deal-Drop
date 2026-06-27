@@ -1,0 +1,108 @@
+name: Test harness
+
+# Tiered test harness (see TESTING.md).
+#  • gate  — runs on every PR/push; the required pre-merge check.
+#  • full  — runs nightly + on demand; adds mutation (and, where a target is
+#            provided, k6 load and Playwright e2e/a11y).
+on:
+  push:
+    branches: [main, phase1-base, 'claude/**']
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 7 * * *' # nightly full run (07:17 UTC)
+
+concurrency:
+  group: test-harness-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gate:
+    name: test:gate (pre-merge)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgis/postgis:16-3.4
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: dealdrop
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres -d dealdrop"
+          --health-interval 10s --health-timeout 5s --health-retries 5
+    env:
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/dealdrop
+      PLATFORM_BACKEND: postgres
+      USE_DEV_AUTH: 'true'
+      TZ: UTC
+      JUNIT: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: 10.16.1 }
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --no-frozen-lockfile
+      # Provision the real DB so the integration tier runs (not skips).
+      - run: pnpm --filter @dealdrop/api db:migrate
+      - run: pnpm --filter @dealdrop/api db:seed
+      - name: Run pre-merge gate
+        run: pnpm test:gate
+      - name: Upload reports
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: gate-reports
+          path: |
+            test-results/
+            tests/coverage/
+          if-no-files-found: ignore
+          retention-days: 14
+
+  full:
+    name: test:full (nightly)
+    if: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgis/postgis:16-3.4
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: dealdrop
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres -d dealdrop"
+          --health-interval 10s --health-timeout 5s --health-retries 5
+    env:
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/dealdrop
+      PLATFORM_BACKEND: postgres
+      USE_DEV_AUTH: 'true'
+      TZ: UTC
+      JUNIT: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: 10.16.1 }
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --no-frozen-lockfile
+      - run: pnpm --filter @dealdrop/api db:migrate
+      - run: pnpm --filter @dealdrop/api db:seed
+      - name: Run full suite (gate + mutation; e2e/load skip without a target)
+        run: pnpm test:full
+      - name: Upload reports
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: full-reports
+          path: |
+            test-results/
+            tests/coverage/
+          if-no-files-found: ignore
+          retention-days: 14

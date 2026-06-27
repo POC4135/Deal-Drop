@@ -1,0 +1,21 @@
+{
+  "$schema": "./node_modules/@stryker-mutator/core/schema/stryker-schema.json",
+  "_comment": "Mutation testing on DealDrop's core pure logic. Verifies the suite actually catches broken code; a green suite with a low mutation score is a warning sign. Run via scripts/mutation.sh (part of `full`).",
+  "packageManager": "pnpm",
+  "testRunner": "vitest",
+  "plugins": ["@stryker-mutator/vitest-runner"],
+  "vitest": {
+    "configFile": "tests/vitest.config.ts"
+  },
+  "mutate": [
+    "services/api/src/modules/trust/engine.ts",
+    "services/api/src/modules/gamification/engine.ts",
+    "services/api/src/lib/geo.ts",
+    "services/api/src/lib/pagination.ts"
+  ],
+  "reporters": ["clear-text", "json", "html"],
+  "jsonReporter": { "fileName": "test-results/mutation.json" },
+  "htmlReporter": { "fileName": "test-results/mutation.html" },
+  "coverageAnalysis": "perTest",
+  "thresholds": { "high": 80, "low": 60, "break": 50 }
+}
