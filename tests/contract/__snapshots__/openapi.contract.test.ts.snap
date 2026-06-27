@@ -1,0 +1,46 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`OpenAPI contract > documents a stable set of endpoints 1`] = `
+[
+  "DELETE /v1/devices/{deviceId}",
+  "DELETE /v1/favorites/{listingId}",
+  "GET /health/live",
+  "GET /health/ready",
+  "GET /v1/admin/dashboard",
+  "GET /v1/admin/queues/moderation",
+  "GET /v1/admin/queues/reports",
+  "GET /v1/admin/queues/stale",
+  "GET /v1/feed/home",
+  "GET /v1/filters/metadata",
+  "GET /v1/leaderboards",
+  "GET /v1/listings/{listingId}",
+  "GET /v1/listings/live-now",
+  "GET /v1/listings/map-bounds",
+  "GET /v1/listings/nearby",
+  "GET /v1/listings/tonight",
+  "GET /v1/me/contributions",
+  "GET /v1/me/karma",
+  "GET /v1/me/preferences",
+  "GET /v1/me/profile",
+  "GET /v1/me/saved",
+  "GET /v1/notifications",
+  "GET /v1/search",
+  "GET /v1/venues/{venueId}",
+  "POST /v1/auth/bootstrap",
+  "POST /v1/auth/sign-in",
+  "POST /v1/auth/sign-up",
+  "POST /v1/contributions/listings",
+  "POST /v1/contributions/listings/{listingId}/update",
+  "POST /v1/contributions/proofs/presign",
+  "POST /v1/devices/register",
+  "POST /v1/favorites/{listingId}",
+  "POST /v1/favorites/sync",
+  "POST /v1/listings/{listingId}/confirm",
+  "POST /v1/listings/{listingId}/report-expired",
+  "POST /v1/notifications/{notificationId}/read",
+  "POST /v1/telemetry/events",
+  "PUT /v1/me/preferences",
+]
+`;
+
+exports[`OpenAPI contract > pins the set of documented-but-unimplemented endpoints (contract coverage) 1`] = `[]`;

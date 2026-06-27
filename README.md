@@ -60,6 +60,19 @@ pnpm --filter @dealdrop/admin-web dev
 
 ### Test
 
+The tiered test harness has a single entry point — run the pre-merge gate before
+proposing any merge:
+
+```bash
+pnpm test:gate     # typecheck + lint + all test tiers + coverage + security scan
+pnpm test:smoke    # seconds: boot + health        pnpm test:unit    # fast: pure logic
+pnpm test:full     # nightly: + mutation/load/e2e  pnpm test:changed # only affected tests
+```
+
+See **[TESTING.md](./TESTING.md)** for the full contract (every tier, how to run/write/
+debug, thresholds, known findings, and the roadmap) and **[AGENTS.md](./AGENTS.md)** for
+AI-agent guidance. Per-stack commands:
+
 ```bash
 pnpm --filter @dealdrop/tests test
 pnpm --filter @dealdrop/api test

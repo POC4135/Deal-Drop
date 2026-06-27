@@ -1,0 +1,217 @@
+{
+  "_comment": "Baseline of KNOWN, pre-existing dependency advisories. security-scan.sh blocks only on advisories NOT listed here. Shrink as deps are upgraded. Regenerate: UPDATE_AUDIT_BASELINE=1 pnpm security:scan",
+  "counts": {
+    "info": 0,
+    "low": 6,
+    "moderate": 9,
+    "high": 14,
+    "critical": 2
+  },
+  "acknowledged": [
+    "GHSA-267c-6grr-h53f",
+    "GHSA-26hh-7cqf-hhc6",
+    "GHSA-2g4f-4pwh-qvx6",
+    "GHSA-36qx-fr4f-26g5",
+    "GHSA-3g8h-86w9-wvmq",
+    "GHSA-492v-c6pp-mqqv",
+    "GHSA-4r6h-8v6p-xvw6",
+    "GHSA-4x5r-pxfx-6jf8",
+    "GHSA-52f5-9888-hmc6",
+    "GHSA-5pgg-2g8v-p4x9",
+    "GHSA-5xrq-8626-4rwp",
+    "GHSA-67mh-4wv8-2f99",
+    "GHSA-8h8q-6873-q5fj",
+    "GHSA-c4j6-fc7j-m34r",
+    "GHSA-ffhc-5mcf-pf4q",
+    "GHSA-fx2h-pf6j-xcff",
+    "GHSA-g7r4-m6w7-qqqr",
+    "GHSA-gpj5-g38j-94v9",
+    "GHSA-gx5p-jg67-6x7h",
+    "GHSA-h64f-5h5j-jqjh",
+    "GHSA-mg66-mrh9-m8jx",
+    "GHSA-ph9p-34f9-6g65",
+    "GHSA-q3j6-qgpj-74h6",
+    "GHSA-qx2v-qp2m-jg93",
+    "GHSA-v39h-62p7-jpjc",
+    "GHSA-v6wh-96g9-6wx3",
+    "GHSA-vfv6-92ff-j949",
+    "GHSA-w7jw-789q-3m8p",
+    "GHSA-wfc6-r584-vfw7"
+  ],
+  "details": [
+    {
+      "id": "GHSA-267c-6grr-h53f",
+      "severity": "high",
+      "module": "next",
+      "title": "Next.js has a Middleware / Proxy bypass in App Router applications via segment-prefetch routes"
+    },
+    {
+      "id": "GHSA-26hh-7cqf-hhc6",
+      "severity": "high",
+      "module": "next",
+      "title": "Next.js has a Middleware / Proxy bypass in App Router applications via segment-prefetch routes - Incomplete Fix Follow-Up"
+    },
+    {
+      "id": "GHSA-2g4f-4pwh-qvx6",
+      "severity": "moderate",
+      "module": "ajv",
+      "title": "ajv has ReDoS when using `$data` option"
+    },
+    {
+      "id": "GHSA-36qx-fr4f-26g5",
+      "severity": "high",
+      "module": "next",
+      "title": "Next.js has a Middleware / Proxy bypass in Pages Router applications using i18n"
+    },
+    {
+      "id": "GHSA-3g8h-86w9-wvmq",
+      "severity": "low",
+      "module": "next",
+      "title": "Next.js's Middleware / Proxy redirects can be cache-poisoned"
+    },
+    {
+      "id": "GHSA-492v-c6pp-mqqv",
+      "severity": "high",
+      "module": "next",
+      "title": "Next.js has a Middleware / Proxy bypass through dynamic route parameter injection"
+    },
+    {
+      "id": "GHSA-4r6h-8v6p-xvw6",
+      "severity": "high",
+      "module": "xlsx",
+      "title": "Prototype Pollution in sheetJS"
+    },
+    {
+      "id": "GHSA-4x5r-pxfx-6jf8",
+      "severity": "low",
+      "module": "@babel/core",
+      "title": "@babel/core: Arbitrary File Read via sourceMappingURL Comment"
+    },
+    {
+      "id": "GHSA-52f5-9888-hmc6",
+      "severity": "low",
+      "module": "tmp",
+      "title": "tmp allows arbitrary temporary file / directory write via symbolic link `dir` parameter"
+    },
+    {
+      "id": "GHSA-5pgg-2g8v-p4x9",
+      "severity": "high",
+      "module": "xlsx",
+      "title": "SheetJS Regular Expression Denial of Service (ReDoS)"
+    },
+    {
+      "id": "GHSA-5xrq-8626-4rwp",
+      "severity": "critical",
+      "module": "vitest",
+      "title": "When Vitest UI server is listening, arbitrary file can be read and executed"
+    },
+    {
+      "id": "GHSA-67mh-4wv8-2f99",
+      "severity": "moderate",
+      "module": "esbuild",
+      "title": "esbuild enables any website to send any requests to the development server and read the response"
+    },
+    {
+      "id": "GHSA-8h8q-6873-q5fj",
+      "severity": "high",
+      "module": "next",
+      "title": "Next.js Vulnerable to Denial of Service with Server Components"
+    },
+    {
+      "id": "GHSA-c4j6-fc7j-m34r",
+      "severity": "high",
+      "module": "next",
+      "title": "Next.js vulnerable to server-side request forgery in applications using WebSocket upgrades"
+    },
+    {
+      "id": "GHSA-ffhc-5mcf-pf4q",
+      "severity": "moderate",
+      "module": "next",
+      "title": "Next.js vulnerable to cross-site scripting in App Router applications using CSP nonces"
+    },
+    {
+      "id": "GHSA-fx2h-pf6j-xcff",
+      "severity": "high",
+      "module": "vite",
+      "title": "vite: `server.fs.deny` bypass on Windows alternate paths"
+    },
+    {
+      "id": "GHSA-g7r4-m6w7-qqqr",
+      "severity": "low",
+      "module": "esbuild",
+      "title": "esbuild allows arbitrary file read when running the development server on Windows"
+    },
+    {
+      "id": "GHSA-gpj5-g38j-94v9",
+      "severity": "high",
+      "module": "drizzle-orm",
+      "title": "Drizzle ORM has SQL injection via improperly escaped SQL identifiers"
+    },
+    {
+      "id": "GHSA-gx5p-jg67-6x7h",
+      "severity": "moderate",
+      "module": "next",
+      "title": "Next.js has cross-site scripting in beforeInteractive scripts with untrusted input"
+    },
+    {
+      "id": "GHSA-h64f-5h5j-jqjh",
+      "severity": "moderate",
+      "module": "next",
+      "title": "Next.js has a Denial of Service in the Image Optimization API"
+    },
+    {
+      "id": "GHSA-mg66-mrh9-m8jx",
+      "severity": "high",
+      "module": "next",
+      "title": "Next.js vulnerable to Denial of Service via connection exhaustion in applications using Cache Components"
+    },
+    {
+      "id": "GHSA-ph9p-34f9-6g65",
+      "severity": "high",
+      "module": "tmp",
+      "title": "tmp has Path Traversal via unsanitized prefix/postfix that enables directory escape"
+    },
+    {
+      "id": "GHSA-q3j6-qgpj-74h6",
+      "severity": "high",
+      "module": "fast-uri",
+      "title": "fast-uri vulnerable to path traversal via percent-encoded dot segments"
+    },
+    {
+      "id": "GHSA-qx2v-qp2m-jg93",
+      "severity": "moderate",
+      "module": "postcss",
+      "title": "PostCSS has XSS via Unescaped </style> in its CSS Stringify Output"
+    },
+    {
+      "id": "GHSA-v39h-62p7-jpjc",
+      "severity": "high",
+      "module": "fast-uri",
+      "title": "fast-uri vulnerable to host confusion via percent-encoded authority delimiters"
+    },
+    {
+      "id": "GHSA-v6wh-96g9-6wx3",
+      "severity": "moderate",
+      "module": "vite",
+      "title": "launch-editor: NTLMv2 hash disclosure via UNC path handling on Windows"
+    },
+    {
+      "id": "GHSA-vfv6-92ff-j949",
+      "severity": "low",
+      "module": "next",
+      "title": "Next.js vulnerable to cache poisoning via collisions in React Server Component cache-busting"
+    },
+    {
+      "id": "GHSA-w7jw-789q-3m8p",
+      "severity": "critical",
+      "module": "shell-quote",
+      "title": "shell-quote quote() does not escape newlines in object .op values"
+    },
+    {
+      "id": "GHSA-wfc6-r584-vfw7",
+      "severity": "moderate",
+      "module": "next",
+      "title": "Next.js vulnerable to cache poisoning in React Server Component responses"
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`auth/RBAC — status-code matrix (dev auth) > pins the route × role access matrix 1`] = `
+{
+  "admin-only:admin-audit": {
+    "admin": 200,
+    "moderator": 403,
+    "no-headers": 200,
+    "user": 403,
+  },
+  "authed:me-profile": {
+    "admin": 200,
+    "moderator": 200,
+    "no-headers": 200,
+    "user": 200,
+  },
+  "moderator:admin-dashboard": {
+    "admin": 200,
+    "moderator": 200,
+    "no-headers": 200,
+    "user": 403,
+  },
+  "public:feed-home": {
+    "admin": 200,
+    "moderator": 200,
+    "no-headers": 200,
+    "user": 200,
+  },
+  "public:health": {
+    "admin": 200,
+    "moderator": 200,
+    "no-headers": 200,
+    "user": 200,
+  },
+}
+`;

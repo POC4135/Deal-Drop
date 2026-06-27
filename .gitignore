@@ -48,6 +48,12 @@ app.*.map.json
 # Monorepo tool outputs
 dist/
 coverage/
+tests/coverage/
+test-results/
+reports/
+.stryker-tmp/
+playwright-report/
+*.tsbuildinfo
 .next/
 node_modules/
 .pnpm-store/
