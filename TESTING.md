@@ -229,6 +229,32 @@ harness — configure those secrets to make it pass).
 
 ---
 
+## Roadmap — what's left to build
+
+The harness is complete and green, but these items are intentionally **not yet
+done**. Pick them up in roughly this order; each is self-contained.
+
+1. **Fix the 5 known findings** (see next section). Each fix will fail its pinned
+   `FINDING:` test — update that test deliberately and move the assertion from
+   "documents the weakness" to "enforces the fix".
+2. **Wire the opt-in tiers to real targets.** Browser e2e + a11y need a running
+   admin web (`E2E_BASE_URL=… scripts/e2e-browser.sh`, after
+   `pnpm add -Dw @playwright/test @axe-core/playwright`); k6 load needs a running
+   API (`LOAD_TARGET=… scripts/load.sh`). Both skip cleanly until then.
+3. **Finish `main`'s postgres-only migration**, then **retarget this PR off
+   `phase1-base` onto `main`** and re-point the hermetic tiers at an ephemeral real
+   Postgres (the in-memory seed backend they use today is being removed). The
+   seed-specific findings below disappear with that backend.
+4. **Deepen the integration tier**: characterize the production
+   `PostgresDealDropPlatform.bootstrapAuthenticatedUser` **cascade-delete** (the
+   highest-risk path), and add **down-migration / rollback** tests once down scripts
+   exist (none do today — flagged in Phase 0).
+5. **Ratchet coverage up.** Current floors (65/78/68/65) sit just under the Phase 2
+   baseline; raise them as suites grow, and expand the covered scope to the
+   postgres-platform and workers as the integration tier grows.
+6. **Install the security scanners in CI** (gitleaks/semgrep/trivy) so they run
+   instead of skipping; add an ESLint config so the gate's lint step becomes blocking.
+
 ## Known findings (pinned, not hidden)
 
 The harness documents real weaknesses in the current **dev/seed** backend by
