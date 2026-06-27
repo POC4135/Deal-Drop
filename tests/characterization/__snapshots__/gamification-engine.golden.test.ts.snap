@@ -1,0 +1,187 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`gamification engine — karma summary (frozen clock) > pins the full karma summary for a seeded contributor via the platform 1`] = `
+{
+  "approvedContributions": 1,
+  "badges": [
+    {
+      "code": "first-proof",
+      "description": "Upload your first accepted proof.",
+      "title": "First Proof",
+      "unlocked": true,
+    },
+    {
+      "code": "week-streak",
+      "description": "Contribute on seven consecutive days.",
+      "title": "Seven Day Run",
+      "unlocked": false,
+    },
+    {
+      "code": "trust-anchor",
+      "description": "Maintain high-accuracy confirmations.",
+      "title": "Trust Anchor",
+      "unlocked": false,
+    },
+  ],
+  "currentStreakDays": 1,
+  "impactUsersHelped": 19,
+  "leaderboard": [
+    {
+      "displayName": "Maya Brooks",
+      "points": 39,
+      "rank": 1,
+      "title": "Deal Scout",
+      "userId": "usr_maya",
+      "verifiedContributor": true,
+    },
+    {
+      "displayName": "Jon Patel",
+      "points": 18,
+      "rank": 2,
+      "title": "Newcomer",
+      "userId": "usr_jon",
+      "verifiedContributor": true,
+    },
+    {
+      "displayName": "Alex Morgan",
+      "points": 14,
+      "rank": 3,
+      "title": "Newcomer",
+      "userId": "usr_alex",
+      "verifiedContributor": true,
+    },
+    {
+      "displayName": "Sam Rivera",
+      "points": 0,
+      "rank": 4,
+      "title": "Newcomer",
+      "userId": "usr_sam",
+      "verifiedContributor": false,
+    },
+  ],
+  "leaderboardWindow": "weekly",
+  "level": "Newcomer",
+  "nextLevelPoints": 21,
+  "pendingContributions": 1,
+  "pendingPoints": 5,
+  "points": 14,
+  "userId": "usr_alex",
+  "verifiedContributor": true,
+}
+`;
+
+exports[`gamification engine — leaderboard windows (frozen clock) > pins daily/weekly/all_time leaderboards over the launch seed 1`] = `
+[
+  {
+    "entries": [
+      {
+        "displayName": "Maya Brooks",
+        "points": 22,
+        "rank": 1,
+        "title": "Newcomer",
+        "userId": "usr_maya",
+        "verifiedContributor": true,
+      },
+      {
+        "displayName": "Jon Patel",
+        "points": 18,
+        "rank": 2,
+        "title": "Newcomer",
+        "userId": "usr_jon",
+        "verifiedContributor": true,
+      },
+      {
+        "displayName": "Alex Morgan",
+        "points": 14,
+        "rank": 3,
+        "title": "Newcomer",
+        "userId": "usr_alex",
+        "verifiedContributor": true,
+      },
+      {
+        "displayName": "Sam Rivera",
+        "points": 0,
+        "rank": 4,
+        "title": "Newcomer",
+        "userId": "usr_sam",
+        "verifiedContributor": false,
+      },
+    ],
+    "window": "daily",
+  },
+  {
+    "entries": [
+      {
+        "displayName": "Maya Brooks",
+        "points": 39,
+        "rank": 1,
+        "title": "Deal Scout",
+        "userId": "usr_maya",
+        "verifiedContributor": true,
+      },
+      {
+        "displayName": "Jon Patel",
+        "points": 18,
+        "rank": 2,
+        "title": "Newcomer",
+        "userId": "usr_jon",
+        "verifiedContributor": true,
+      },
+      {
+        "displayName": "Alex Morgan",
+        "points": 14,
+        "rank": 3,
+        "title": "Newcomer",
+        "userId": "usr_alex",
+        "verifiedContributor": true,
+      },
+      {
+        "displayName": "Sam Rivera",
+        "points": 0,
+        "rank": 4,
+        "title": "Newcomer",
+        "userId": "usr_sam",
+        "verifiedContributor": false,
+      },
+    ],
+    "window": "weekly",
+  },
+  {
+    "entries": [
+      {
+        "displayName": "Maya Brooks",
+        "points": 39,
+        "rank": 1,
+        "title": "Deal Scout",
+        "userId": "usr_maya",
+        "verifiedContributor": true,
+      },
+      {
+        "displayName": "Jon Patel",
+        "points": 18,
+        "rank": 2,
+        "title": "Newcomer",
+        "userId": "usr_jon",
+        "verifiedContributor": true,
+      },
+      {
+        "displayName": "Alex Morgan",
+        "points": 14,
+        "rank": 3,
+        "title": "Newcomer",
+        "userId": "usr_alex",
+        "verifiedContributor": true,
+      },
+      {
+        "displayName": "Sam Rivera",
+        "points": 0,
+        "rank": 4,
+        "title": "Newcomer",
+        "userId": "usr_sam",
+        "verifiedContributor": false,
+      },
+    ],
+    "window": "all_time",
+  },
+]
+`;
